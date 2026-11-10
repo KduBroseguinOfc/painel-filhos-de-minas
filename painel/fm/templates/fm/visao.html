@@ -1,0 +1,37 @@
+{% extends "fm/base.html" %}{% load humanize static %}
+{% block cabecalho %}Visão geral{% endblock %}
+{% block topo_dir %}{% if coleta %}<span class="chip">Dados de {{ coleta.fim|date:"d/m H:i" }}</span>{% endif %} <a class="botao sec" href="{% url 'tv' %}" title="Tela cheia para monitor, atualiza sozinha">Modo TV</a>{% endblock %}
+{% block conteudo %}
+{% for cor, texto in alertas %}<div class="aviso aviso-{{ cor }}">{{ texto }}</div>{% endfor %}
+<section class="cartoes" aria-label="Resumo">
+  <a class="cartao" href="{% url 'gestantes' %}"><span class="rotulo">Gestantes elegíveis</span><span class="numero" data-contador="{{ c.no_recorte }}">{{ c.no_recorte|intcomma }}</span><span class="sub">no recorte do programa</span></a>
+  <a class="cartao ok" href="{% url 'gestantes' %}?situacao=aceita"><span class="rotulo">Aceitas pela SES-MG</span><span class="numero" data-contador="{{ c.aceita }}">{{ c.aceita|intcomma }}</span><span class="sub">+{{ aceitas_semana }} na semana</span></a>
+  <a class="cartao alerta" href="{% url 'gestantes' %}?situacao=sem_cns"><span class="rotulo">Sem CNS no atendimento</span><span class="numero" data-contador="{{ c.sem_cns }}">{{ c.sem_cns|intcomma }}</span><span class="sub">erro 500 da API</span></a>
+  <a class="cartao neutro" href="{% url 'gestantes' %}?situacao=fora_bolsa"><span class="rotulo">Fora do Bolsa Família</span><span class="numero" data-contador="{{ c.fora_bolsa }}">{{ c.fora_bolsa|intcomma }}</span><span class="sub">regra do programa</span></a>
+  <a class="cartao alerta" href="{% url 'gestantes' %}?situacao=sem_cpf"><span class="rotulo">Sem CPF</span><span class="numero" data-contador="{{ c.sem_cpf }}">{{ c.sem_cpf }}</span><span class="sub">erro 422 da API</span></a>
+  <a class="cartao erro" href="{% url 'gestantes' %}?situacao=erro_api"><span class="rotulo">Erro da API</span><span class="numero" data-contador="{{ c.erro_api }}">{{ c.erro_api }}</span><span class="sub">tenta de novo a cada hora</span></a>
+  <a class="cartao neutro" href="{% url 'gestantes' %}?situacao=fora_recorte"><span class="rotulo">Fora do recorte</span><span class="numero" data-contador="{{ c.fora_recorte }}">{{ c.fora_recorte|intcomma }}</span><span class="sub">DUM há mais de 1 ano, não enviadas</span></a>
+</section>
+<section class="grade-2">
+  <div class="painel">
+    <h2>Situação do envio</h2>
+    <dl class="lista-dados">
+      <dt>Última rotina do extrator</dt><dd>{% if rotina %}{{ rotina.inicio|date:"d/m H:i" }} · <strong>{{ rotina.enviados }}/{{ rotina.total }}</strong> aceites{% if rotina.erros %} · {{ rotina.erros }} recusas{% endif %}{% else %}—{% endif %}</dd>
+      <dt>Último lote do PEC</dt><dd>{% if coleta.ultimo_lote_pec %}{{ coleta.ultimo_lote_pec|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
+      <dt>Próxima importação esperada</dt><dd>{{ imp_ini|date:"d/m" }} a {{ imp_fim|date:"d/m/Y" }} <small>(lote mensal, 6 a 10 dias após fechar o mês)</small></dd>
+      <dt>Novas pendentes na semana</dt><dd><a href="{% url 'gestantes' %}?recorte=novas">{{ novas }}</a></dd>
+      <dt>Perto do parto e ainda pendentes</dt><dd><a href="{% url 'gestantes' %}?recorte=parto">{{ perto_parto }}</a> <small>(33 a 42 semanas de gestação)</small></dd>
+      <dt>Pendentes com gestação em curso</dt><dd><a href="{% url 'gestantes' %}?recorte=curso">{{ c.pendentes_curso }}</a> <small>(até 42 semanas: é onde a UBS deve agir)</small></dd>
+      <dt>Parto provável e ainda pendentes</dt><dd><a href="{% url 'gestantes' %}?recorte=parto_provavel">{{ c.parto_provavel }}</a> <small>(mais de 42 semanas, até 1 ano; ainda enviadas à SES-MG)</small></dd>
+    </dl>
+  </div>
+  <div class="painel"><h2>Pendências por motivo</h2><div class="grafico pequeno"><canvas id="g-rosca" aria-label="Pendências por motivo" role="img"></canvas></div></div>
+</section>
+<section class="grade-2">
+  <div class="painel"><h2>Evolução (90 dias)</h2><div class="grafico"><canvas id="g-evolucao" aria-label="Evolução das situações" role="img"></canvas></div></div>
+  <div class="painel"><h2>Aceites por rotina (48 h)</h2><div class="grafico"><canvas id="g-rotinas" aria-label="Aceites por rotina" role="img"></canvas></div></div>
+</section>
+<section class="painel"><h2>UBS com mais pendências</h2><div class="grafico"><canvas id="g-ubs" aria-label="UBS com mais pendências" role="img"></canvas></div><p class="sub"><a href="{% url 'ubs' %}">Ver todas as unidades →</a></p></section>
+{% endblock %}
+{% block json %}<script type="application/json" id="dados-graficos">{{ graficos|safe }}</script>{% endblock %}
+{% block scripts %}<script src="{% static 'fm/chart.umd.min.js' %}" defer></script><script src="{% static 'fm/visao.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "fm/base.html" %}{% load fm_extras %}
+{% block cabecalho %}{{ g.nome }}{% endblock %}
+{% block topo_dir %}<span class="etiqueta grande {{ g.situacao }}">{{ g.get_situacao_display }}</span>{% endblock %}
+{% block conteudo %}
+<section class="grade-2">
+  <div class="painel">
+    <h2>Dados</h2>
+    <dl class="lista-dados">
+      <dt>CPF</dt><dd>{% if g.cpf %}<span id="cpf" class="mono">{% if CPF_COMPLETO_PADRAO %}{{ g.cpf }}{% else %}{{ g.cpf_mascarado }}{% endif %}</span> {% if not CPF_COMPLETO_PADRAO %}<button type="button" class="botao mini" id="revelar" data-url="{% url 'revelar_cpf' g.id %}" data-confirmar="Ao revelar o CPF completo fica REGISTRADO no painel: seu usuário ({{ user.username }}), data e hora, e o endereço IP de onde você acessou. Confirma?">revelar CPF (registrado)</button><br><small class="sub">O CPF aparece mascarado por padrão (LGPD). Revelar é uma escolha sua e fica na trilha de acesso.</small>{% endif %}{% else %}<span class="etiqueta sem_cpf">sem CPF no e-SUS</span>{% endif %}</dd>
+      <dt>CNS</dt><dd>{% if g.cns %}<span class="mono">{{ g.cns }}</span>{% else %}<span class="etiqueta sem_cns">sem CNS no cadastro</span>{% if sug %}<div class="sugestao-cns"><strong>CNS encontrado no {{ sug.fonte }}, ainda não validado:</strong> <span class="mono">{{ sug.cns }}</span>{% if sug.confere %} <span class="etiqueta aceita">nome e nascimento conferem com o PEC</span>{% else %} <span class="etiqueta erro_api">no {{ sug.fonte }} consta {{ sug.nome_fonte }}{% if sug.nascimento_fonte %}, nascida em {{ sug.nascimento_fonte|date:"d/m/Y" }}{% endif %}: conferir com cuidado</span>{% endif %}<br><small>Esse número veio de um cruzamento de cadastros, não do CadSUS. Antes de usar: <strong>1)</strong> no PEC, abrir o cadastro do cidadão pelo CPF e consultar o CadSUS; <strong>2)</strong> se o CadSUS confirmar este CNS (ou devolver outro), gravar o do CadSUS; <strong>3)</strong> se não confirmar, não usar. Gravado o CNS, o envio ao Filhos de Minas sai sozinho em até 1 hora. Lista de {{ sug.importado_em|date:"d/m/Y" }}.</small></div>{% endif %}{% endif %}</dd>
+      <dt>Nascimento</dt><dd>{{ g.nascimento|date:"d/m/Y"|default:"—" }}</dd>
+      <dt>Nome da mãe</dt><dd>{{ g.nome_mae|default:"—" }}</dd>
+      <dt>Telefone</dt><dd>{{ g.telefone|default:"—" }}</dd>
+      <dt>Bairro</dt><dd>{{ g.bairro|default:"—" }}</dd>
+      <dt>UBS / equipe</dt><dd>{% if g.unidade %}<a href="{% url 'ubs_detalhe' g.unidade.id %}">{{ g.unidade.nome }}</a>{% else %}—{% endif %} / {{ g.equipe.nome|default:"—" }}</dd>
+      <dt>Profissional (último atend.)</dt><dd>{{ g.profissional|default:"—" }}</dd>
+      <dt>DUM</dt><dd>{{ g.dum|date:"d/m/Y"|default:"—" }}{% if ig %} · {{ ig.semanas }} sem {{ ig.dias }} d · DPP {{ ig.dpp|date:"d/m/Y" }}{% endif %}</dd>
+      <dt>Exames do pré-natal (PEC)</dt><dd>{% if g.exames_prenatal %}sífilis {% if g.exame_sifilis %}✔{% else %}✖{% endif %} · HIV {% if g.exame_hiv %}✔{% else %}✖{% endif %} · hepatite B {% if g.exame_hepb %}✔{% else %}✖{% endif %} · toxoplasmose {% if g.exame_toxo %}✔{% else %}✖{% endif %}{% else %}nenhum exame registrado desde a DUM{% endif %}</dd>
+      <dt>Atendimentos</dt><dd>{{ g.atendimentos }} ({{ g.atendimentos_aceitos }} aceitos) · primeiro {{ g.primeiro_atendimento|date:"d/m/Y"|default:"—" }} · último {{ g.ultimo_atendimento|date:"d/m/Y"|default:"—" }}</dd>
+    </dl>
+  </div>
+  <div class="painel">
+    <h2>O que fazer</h2>
+    <div class="orientacao {{ g.situacao }}"><p>{{ g.orientacao }}</p>{% if g.motivo %}<p><small>Resposta da API: {{ g.motivo }}</small></p>{% endif %}</div>
+    <p class="sub">Nesta situação desde {{ g.situacao_desde|date:"d/m/Y H:i" }}{% if g.aceita_em %} · aceita em {{ g.aceita_em|date:"d/m/Y H:i" }}{% endif %} · no painel desde {{ g.primeira_vista|date:"d/m/Y" }}</p>
+    <h2>Na SES-MG</h2>
+    {% if conf and conf.verificado_em %}<dl class="lista-dados">
+      <dt>Cadastro</dt><dd>{% if conf.cadastrada %}<span class="etiqueta aceita">cadastrada</span>{% if not conf.habilitada %} <span class="etiqueta fora_bolsa">desabilitada</span>{% endif %}{% else %}<span class="etiqueta fora_bolsa">sem cadastro</span>{% endif %} <small>(conferido em {{ conf.verificado_em|date:"d/m/Y H:i" }})</small></dd>
+      {% if conf.cadastrada %}<dt>Gravidez</dt><dd>{{ conf.status_gravidez|default:"—" }}{% if conf.dum_ses %} · DUM {{ conf.dum_ses|date:"d/m/Y" }}{% endif %} · {{ conf.consultas_ses }} consulta(s) registrada(s)</dd>
+      <dt>Kit do programa</dt><dd>{{ conf.status_kit|default:"—" }}{% if conf.data_entrega_kit %} em {{ conf.data_entrega_kit|date:"d/m/Y" }}{% endif %}</dd>{% endif %}
+      {% if conf.divergencia %}<dt>Divergência</dt><dd><span class="etiqueta erro_api">{{ conf.divergencia }}</span></dd>{% endif %}
+      {% if conf.erro %}<dt>Erro na consulta</dt><dd><small>{{ conf.erro }}</small></dd>{% endif %}
+    </dl>{% else %}<p class="sub">Ainda não conferida na API da SES-MG (a conferência roda todo dia às 05:30).</p>{% endif %}
+    <h2>Histórico</h2>
+    <ol class="linha-tempo">{% for e in eventos %}<li><time>{{ e.quando|date:"d/m/Y H:i" }}</time> {% if e.de %}<span class="etiqueta {{ e.de }}">{{ sit|get_item:e.de }}</span> → {% endif %}<span class="etiqueta {{ e.para }}">{{ sit|get_item:e.para }}</span>{% if e.detalhe %}<br><small>{{ e.detalhe }}</small>{% endif %}</li>{% empty %}<li>Sem mudanças registradas.</li>{% endfor %}</ol>
+  </div>
+</section>
+{% endblock %}

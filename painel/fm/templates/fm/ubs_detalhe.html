@@ -1,0 +1,12 @@
+{% extends "fm/base.html" %}
+{% block cabecalho %}{{ u.nome }}{% endblock %}
+{% block topo_dir %}<a class="botao" href="{% url 'gestantes' %}?unidade={{ u.id }}&situacao=pendentes">Ver pendentes</a> <a class="botao sec" href="{% url 'gestantes' %}?unidade={{ u.id }}&exportar=1">Exportar CSV</a>{% endblock %}
+{% block conteudo %}
+<p class="sub">CNES {{ u.cnes }}{% if u.bairro %} · {{ u.bairro }}{% endif %} · {{ c.total }} gestantes · {{ c.aceita }} aceitas · {{ c.pendentes }} pendentes</p>
+<div class="tabela-rolagem"><table class="tabela">
+<thead><tr><th>Equipe</th><th class="num">Elegíveis</th><th class="num">Aceitas</th><th class="num">Sem CNS</th><th class="num">Fora do Bolsa</th><th class="num">Sem CPF</th><th class="num">Pendentes</th><th class="num">Fora do recorte</th></tr></thead>
+<tbody>{% for l in equipes %}<tr>
+  <td>{% if l.id %}<a href="{% url 'gestantes' %}?unidade={{ u.id }}&equipe={{ l.id }}">{{ l.nome }}</a>{% else %}{{ l.nome }}{% endif %}</td>
+  <td class="num">{{ l.total }}</td><td class="num ok">{{ l.aceita }}</td><td class="num">{{ l.sem_cns }}</td><td class="num">{{ l.fora_bolsa }}</td><td class="num">{{ l.sem_cpf }}</td><td class="num"><strong>{{ l.pendentes }}</strong></td><td class="num">{{ l.fora_recorte }}</td>
+</tr>{% endfor %}</tbody></table></div>
+{% endblock %}

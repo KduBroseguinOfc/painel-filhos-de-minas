@@ -1,0 +1,16 @@
+[Unit]
+Description=Painel Filhos de Minas - resumo diario dos alertas (08:00)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/python manage.py avaliar_alertas dia
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas

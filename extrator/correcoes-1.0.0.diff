@@ -1,0 +1,180 @@
+diff -ru a/app/core/storage.js b/app/core/storage.js
+--- a/app/core/storage.js	1985-10-26 05:15:00.000000000 -0300
++++ b/app/core/storage.js	1985-10-26 05:15:00.000000000 -0300
+@@ -232,6 +232,20 @@
+     .filter((n) => Number.isFinite(n));
+ }
+ 
++// CORRECAO CNS: TODOS os itens pendentes sem CPF ou sem CNS sao relidos do DW a cada execucao, para pegar o
++// documento corrigido no cadastro do cidadao (tb_cidadao / tb_fat_cidadao_pec). Sem filtro de DUM: tudo que e
++// enviado tambem e relido. O limite so e aplicado quando informado (Oracle: clausula IN de ate 1000 valores).
++function getMissingDocIds(moduleId, limit = null) {
++  const sql = `SELECT item_id FROM module_items WHERE module_id = ? AND queued = 0
++         AND (cpf IS NULL OR TRIM(cpf) = '' OR cns IS NULL OR TRIM(cns) = '')
++       ORDER BY item_id ASC` + (limit ? ` LIMIT ${Number(limit)}` : '');
++  return getDb()
++    .prepare(sql)
++    .all(moduleId)
++    .map((r) => Number(r.item_id))
++    .filter((n) => Number.isFinite(n));
++}
++
+ function persistModuleItems(moduleId, items = []) {
+   if (!items || items.length === 0) {
+     return { inserted: 0, updated: 0 };
+@@ -663,6 +677,41 @@
+     .all(params);
+ }
+ 
++// FORA DO RECORTE: o recorte do extrator e DUM dentro de 365 dias (mesma regra da consulta ao DW). Item pendente cuja
++// DUM ja passou disso nao e mais relido nem tem como ser aceito como gestacao em curso: fica marcado e deixa de ser
++// enviado a cada hora. Se a DUM for corrigida no PEC e voltar ao recorte, o item volta a fila.
++function markOutOfScope(moduleId, days = 365) {
++  const dbInstance = getDb();
++  const marcados = dbInstance
++    .prepare(
++      `UPDATE module_items SET status_response = 'fora_recorte',
++              message_response = 'Fora do recorte: DUM ha mais de ' || @days || ' dias (nao enviado)',
++              updated_at = CURRENT_TIMESTAMP
++        WHERE module_id = @moduleId AND queued = 0
++          AND dum IS NOT NULL AND TRIM(dum) <> ''
++          AND date(substr(dum, 1, 10)) < date('now', '-' || @days || ' day')
++          AND (status_response IS NULL OR status_response <> 'fora_recorte')`
++    )
++    .run({ moduleId, days }).changes;
++  const devolvidos = dbInstance
++    .prepare(
++      `UPDATE module_items SET status_response = NULL, message_response = NULL, updated_at = CURRENT_TIMESTAMP
++        WHERE module_id = @moduleId AND queued = 0 AND status_response = 'fora_recorte'
++          AND (dum IS NULL OR TRIM(dum) = '' OR date(substr(dum, 1, 10)) >= date('now', '-' || @days || ' day'))`
++    )
++    .run({ moduleId, days }).changes;
++  return { marcados, devolvidos };
++}
++
++// VARREDURA DIARIA: ids dos itens marcados fora do recorte, para releitura no DW 1x por dia (DUM corrigida volta).
++function getOutOfScopeIds(moduleId) {
++  return getDb()
++    .prepare(`SELECT item_id FROM module_items WHERE module_id = ? AND queued = 0 AND status_response = 'fora_recorte' ORDER BY item_id ASC`)
++    .all(moduleId)
++    .map((r) => Number(r.item_id))
++    .filter((n) => Number.isFinite(n));
++}
++
+ function getPendingItems(moduleId, limit) {
+   const dbInstance = getDb();
+   const limitClause =
+@@ -671,6 +720,9 @@
+       SELECT item_id, nome, cpf, cns, cpf_ou_cns, doc_tipo, mother_name, birth_date, professional_name, dt_inicial_atendimento,dum, cbo, cid, ciap, qtd_filhos
+       FROM module_items
+       WHERE module_id = @moduleId AND queued = 0
++        AND (status_response IS NULL OR status_response <> 'fora_recorte')
++        -- recusa por regra do programa (CadUnico): tentar de novo so 1x por dia; as demais, a cada rotina
++        AND NOT (message_response LIKE '%Bolsa%' AND updated_at > datetime('now', '-1 day'))
+       ORDER BY item_id ASC
+       ${limitClause}
+     `;
+@@ -744,6 +796,7 @@
+   hasMissingNames,
+   getMissingNameIds,
+   getMissingDtIds,
++  getMissingDocIds,
+   persistModuleItems,
+   markQueued,
+   setSyncResponse,
+@@ -751,6 +804,8 @@
+   runSql,
+   listModuleItems,
+   getPendingItems,
++  markOutOfScope,
++  getOutOfScopeIds,
+   getValidDumEntries,
+   logModuleEvent,
+   getModuleLogSummary,
+diff -ru a/modules/filhos_de_minas/index.js b/modules/filhos_de_minas/index.js
+--- a/modules/filhos_de_minas/index.js	1985-10-26 05:15:00.000000000 -0300
++++ b/modules/filhos_de_minas/index.js	1985-10-26 05:15:00.000000000 -0300
+@@ -2,6 +2,8 @@
+   getLastItemId,
+   getMissingNameIds,
+   getMissingDtIds,
++  getMissingDocIds,
++  getOutOfScopeIds,
+   persistModuleItems,
+   getValidDumEntries
+ } = require('../../app/core/storage');
+@@ -117,7 +119,9 @@
+     ag.co_seq_fat_atd_ind                   AS co_seq_fat_atd_ind,
+     c.no_cidadao                            AS nome,
+     COALESCE(a.nu_cpf_cidadao, c.nu_cpf, fcp_cid.nu_cpf_cidadao) AS cpf,
+-    a.nu_cns                                AS cns,
++    -- CORRECAO CNS: o CNS do atendimento fica vazio quando a gestante e identificada pelo CPF;
++    -- busca tambem no cadastro do cidadao (tb_cidadao e tb_fat_cidadao_pec), como ja era feito com o CPF.
++    COALESCE(NULLIF(TRIM(a.nu_cns), ''), NULLIF(TRIM(c.nu_cns), ''), NULLIF(TRIM(fcp.nu_cns), '')) AS cns,
+     a.co_fat_cidadao_pec                    AS co_fat_cidadao,
+     c.no_mae                               AS mother_name,
+     c.dt_nascimento                        AS birth_date,
+@@ -161,10 +165,18 @@
+   const lastPersistedId = getLastItemId(MODULE_ID);
+   const missingNameIds = getMissingNameIds(MODULE_ID);
+   const missingDtIds = getMissingDtIds(MODULE_ID);
+-  const repairIds = [...new Set([...missingNameIds, ...missingDtIds])];
+-  const minId = Number.isFinite(Number(lastPersistedId)) ? Number(lastPersistedId) : null;
+-
++  // CORRECAO CNS: tambem rele do DW todos os itens pendentes sem CPF/CNS, para pegar o documento corrigido no
++  // cadastro. No PostgreSQL a lista vai inteira (parametros ate 65535); no Oracle a clausula IN aceita 1000.
+   const dbType = (config['dw.type'] || '').toLowerCase();
++  const missingDocIds = getMissingDocIds(MODULE_ID, dbType === 'oracle' ? 1000 : null);
++  // VARREDURA DIARIA (rotina das 03h, ou FILHOS_VARREDURA_DIARIA=1): rele tambem os itens fora do recorte; se a DUM
++  // foi corrigida no PEC e voltou aos 365 dias, a consulta devolve a linha, o item e atualizado e volta a fila no envio.
++  const varreduraDiaria = process.env.FILHOS_VARREDURA_DIARIA === '1' || new Date().getHours() === 3;
++  const outOfScopeIds = varreduraDiaria ? getOutOfScopeIds(MODULE_ID) : [];
++  if (outOfScopeIds.length) console.log(`[Filhos de Minas] Varredura diaria: relendo ${outOfScopeIds.length} item(ns) fora do recorte.`);
++  const repairIdsAll = [...new Set([...missingNameIds, ...missingDtIds, ...missingDocIds, ...outOfScopeIds])];
++  const repairIds = dbType === 'oracle' ? repairIdsAll.slice(0, 1000) : repairIdsAll;
++  const minId = Number.isFinite(Number(lastPersistedId)) ? Number(lastPersistedId) : null;
+   if (!['postgres', 'oracle'].includes(dbType)) {
+     throw new Error('Configuração dw.type inválida. Use postgres ou oracle.');
+   }
+diff -ru a/modules/filhos_de_minas/sender.js b/modules/filhos_de_minas/sender.js
+--- a/modules/filhos_de_minas/sender.js	1985-10-26 05:15:00.000000000 -0300
++++ b/modules/filhos_de_minas/sender.js	1985-10-26 05:15:00.000000000 -0300
+@@ -1,4 +1,4 @@
+-const { getPendingItems, logModuleEvent, setSyncResponse, markQueued } = require('../../app/core/storage');
++const { getPendingItems, logModuleEvent, setSyncResponse, markQueued, markOutOfScope } = require('../../app/core/storage');
+ const MODULE_ID = 'filhos_de_minas';
+ const FALLBACK_API_URL = (() => {
+   const env = String(process.env.FILHOS_DE_MINAS_API_URL || '').trim();
+@@ -73,6 +73,10 @@
+     }
+ 
+     const group = groups.get(key);
++    // CORRECAO CNS: se o primeiro atendimento da gestante veio sem CPF/CNS, completa com os demais atendimentos dela.
++    const g = group.payload.gestante;
++    if (!g.cpf) g.cpf = sanitizedCpf || (row.doc_tipo === 'cpf' ? sanitizedCpfOuCns : null);
++    if (!g.cns) g.cns = sanitizedCns || (row.doc_tipo === 'cns' ? sanitizedCpfOuCns : null);
+     const dtInicialRaw = row.dt_inicial_atendimento;
+     const dtInicialFormatted = formatDate(dtInicialRaw) || null;
+     const consultaDate =
+@@ -123,7 +127,8 @@
+   if (!payload.item_id) errors.push('item_id ausente');
+   const gestante = payload.gestante || {};
+   if (!gestante.nome) errors.push('gestante.nome ausente');
+-  if (!gestante.cpf) errors.push('gestante.cpf ausente');
++  // CORRECAO CNS: a gestante e identificada por CPF ou CNS (conforme a documentacao do modulo); antes exigia o CPF.
++  if (!gestante.cpf && !gestante.cns) errors.push('gestante.cpf/cns ausente');
+   if (!gestante.data_nascimento) errors.push('gestante.data_nascimento ausente');
+ 
+   const consultas = Array.isArray(payload.consultas) ? payload.consultas : [];
+@@ -266,6 +271,11 @@
+ 
+ async function sendPendingItems(config = {}, options = {}) {
+   const limit = Number.isFinite(Number(options.limit)) && options.limit > 0 ? Number(options.limit) : undefined;
++  // FORA DO RECORTE: DUM ha mais de 365 dias nao e enviada (ver markOutOfScope em app/core/storage.js)
++  const fora = markOutOfScope(MODULE_ID, 365);
++  if (fora.marcados || fora.devolvidos) {
++    console.log(`[Filhos de Minas] Fora do recorte (DUM > 365 dias): ${fora.marcados} item(ns) marcado(s), ${fora.devolvidos} devolvido(s) a fila.`);
++  }
+   const pending = getPendingItems(MODULE_ID, limit);
+   if (!pending || pending.length === 0) {
+     console.log('[Filhos de Minas] Nenhum registro pendente para preparar.');

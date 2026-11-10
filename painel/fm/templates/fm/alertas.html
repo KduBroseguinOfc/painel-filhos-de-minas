@@ -1,0 +1,17 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Meus alertas{% endblock %}
+{% block topo_dir %}<a class="botao" href="{% url 'alerta_novo' %}">Novo alerta</a>{% endblock %}
+{% block conteudo %}
+<p class="sub">Cada alerta é seu: escolha as unidades, as situações e quando avisar. Os avisos saem depois de cada coleta (de hora em hora) ou num resumo diário, por e-mail institucional e/ou Telegram.</p>
+<div class="painel canal-status">{% if telegram and telegram.chat_id %}<span class="etiqueta aceita">Telegram vinculado</span> ao seu usuário ({{ bot }}) · <a href="{% url 'telegram' %}">gerenciar</a>{% else %}<strong>Telegram ainda não vinculado.</strong> Para receber avisos no celular: <a class="botao mini" href="{% url 'telegram' %}">vincular meu Telegram</a>{% endif %}</div>
+<div class="tabela-rolagem"><table class="tabela">
+<thead><tr><th>Nome</th><th>Unidades</th><th>Situações</th><th>Avisar quando</th><th>Canais</th><th>Frequência</th><th>Último envio</th><th></th></tr></thead>
+<tbody>{% for a in alertas %}<tr {% if not a.ativo %}class="inativo"{% endif %}>
+  <td><a href="{% url 'alerta_editar' a.id %}">{{ a.nome }}</a>{% if not a.ativo %} <small>(desligado)</small>{% endif %}</td>
+  <td>{% for u in a.unidades.all %}{{ u.nome }}{% if not forloop.last %}, {% endif %}{% empty %}todas{% endfor %}</td>
+  <td>{{ a.situacoes|join:", "|default:"todas" }}</td><td>{{ a.eventos|join:", " }}</td>
+  <td>{% if a.por_email %}E-mail{% if a.destino %} <small>({{ a.destino }})</small>{% endif %}{% endif %}{% if a.por_email and a.por_telegram %} + {% endif %}{% if a.por_telegram %}Telegram{% endif %}</td><td>{{ a.get_frequencia_display }}</td>
+  <td>{{ a.ultimo_envio|date:"d/m H:i"|default:"nunca" }}</td>
+  <td><form method="post" action="{% url 'alerta_apagar' a.id %}" data-confirmar="Apagar o alerta {{ a.nome }}?">{% csrf_token %}<button class="botao mini perigo" type="submit">apagar</button></form></td>
+</tr>{% empty %}<tr><td colspan="8" class="vazio"><img class="ilustra" src="{% static 'fm/ilustra-vazio.svg' %}" alt="" width="220" height="140">Você ainda não tem alertas. Exemplo: "gestantes sem CNS da UBS Panorama, me avise no Telegram quando entrar uma nova".</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

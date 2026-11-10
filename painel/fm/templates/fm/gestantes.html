@@ -1,0 +1,33 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}{{ titulo }}{% endblock %}
+{% block topo_dir %}<a class="botao sec" href="?{{ query }}&exportar=1" title="Exporta o que está filtrado, com o CPF mascarado (fica registrado)">Exportar CSV</a> <a class="botao sec" href="?{{ query }}&exportar=1&cpf=completo" data-confirmar="Exportar com CPF COMPLETO fica REGISTRADO no painel: seu usuário ({{ user.username }}), data e hora, o filtro usado, a quantidade de gestantes e o IP de onde você acessou. O arquivo contém dados pessoais e de saúde (LGPD): guarde só onde for necessário e apague quando terminar. Confirma?" title="Exporta com o CPF completo (registrado)">Exportar CSV com CPF completo</a>{% endblock %}
+{% block conteudo %}
+<form method="get" class="filtros" id="filtros" aria-label="Filtros">
+  <label>UBS <select name="unidade" data-recarrega><option value="">Todas</option>{% for u in unidades %}<option value="{{ u.id }}" {% if f.unidade == u.id|stringformat:'s' %}selected{% endif %}>{{ u.nome }}</option>{% endfor %}</select></label>
+  <label>Equipe <select name="equipe" {% if not equipes %}disabled{% endif %}><option value="">Todas</option>{% for e in equipes %}<option value="{{ e.id }}" {% if f.equipe == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nome }}</option>{% endfor %}</select></label>
+  <label>Situação <select name="situacao"><option value="">Todas</option><option value="pendentes" {% if f.situacao == 'pendentes' %}selected{% endif %}>Todas as pendentes</option>{% for k, v in situacoes %}<option value="{{ k }}" {% if f.situacao == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+  <label>CNS no cadastro <select name="cns"><option value="">Tanto faz</option><option value="sim" {% if f.cns == 'sim' %}selected{% endif %}>Tem (A1)</option><option value="nao" {% if f.cns == 'nao' %}selected{% endif %}>Não tem (A2)</option></select></label>
+  <label>DUM de <input type="date" name="dum_de" value="{{ f.dum_de }}"></label>
+  <label>até <input type="date" name="dum_ate" value="{{ f.dum_ate }}"></label>
+  <label>Último atendimento de <input type="date" name="atd_de" value="{{ f.atd_de }}"></label>
+  <label>até <input type="date" name="atd_ate" value="{{ f.atd_ate }}"></label>
+  <label>Profissional <input type="search" name="prof" value="{{ f.prof }}" placeholder="nome"></label>
+  <label class="busca">Buscar <input type="search" name="q" value="{{ f.q }}" placeholder="nome, nome da mãe, CPF ou CNS"></label>
+  <label>Ordenar <select name="o"><option value="nome" {% if f.o == 'nome' %}selected{% endif %}>Nome</option><option value="ubs" {% if f.o == 'ubs' %}selected{% endif %}>UBS</option><option value="dum" {% if f.o == 'dum' %}selected{% endif %}>DUM</option><option value="atd" {% if f.o == 'atd' %}selected{% endif %}>Último atendimento</option><option value="sit" {% if f.o == 'sit' %}selected{% endif %}>Situação</option></select></label>
+  <label>Endereço <select name="end"><option value="">Tanto faz</option><option value="nao" {% if f.end == 'nao' %}selected{% endif %}>Sem endereço no e-SUS</option><option value="sim" {% if f.end == 'sim' %}selected{% endif %}>Com endereço</option><option value="mapa" {% if f.end == 'mapa' %}selected{% endif %}>Já no mapa</option></select></label>
+  <label>Recorte <select name="recorte"><option value="">Nenhum</option><option value="novas" {% if f.recorte == 'novas' %}selected{% endif %}>Novas na semana (entraram há até 7 dias)</option><option value="parto" {% if f.recorte == 'parto' %}selected{% endif %}>Perto do parto (33 a 42 semanas)</option><option value="curso" {% if f.recorte == 'curso' %}selected{% endif %}>Gestação em curso (até 42 semanas)</option><option value="parto_provavel" {% if f.recorte == 'parto_provavel' %}selected{% endif %}>Parto provável (mais de 42 semanas, até 1 ano)</option></select></label>
+  <div class="filtros-acoes"><button class="botao" type="submit">Filtrar</button> <a class="botao sec" href="{% url 'gestantes' %}">Limpar</a></div>
+</form>
+{% if f.novas %}<div class="aviso aviso-info">Mostrando gestantes que entraram no painel nos últimos 7 dias{% if not f.situacao %} e ainda não foram aceitas (escolha uma situação para ver as outras){% endif %}.</div>{% endif %}
+{% if f.parto %}<div class="aviso aviso-info">Mostrando gestantes entre 33 e 42 semanas de gestação{% if not f.situacao %} e ainda não aceitas (escolha uma situação para ver as outras){% endif %}. Depois do parto a gestante sai do programa.</div>{% endif %}
+<p class="sub">{{ total }} gestante{{ total|pluralize }} · página {{ pagina }} de {{ paginas }} · CPF mascarado (LGPD): o completo só no detalhe, com registro de quem revelou. Exportar também fica registrado.</p>
+<div class="tabela-rolagem"><table class="tabela compacta">
+<thead><tr><th>Nome</th><th>Situação</th><th>UBS</th><th>Equipe</th><th>DUM</th><th>Último atend.</th><th>Desde</th></tr></thead>
+<tbody>{% for g in itens %}<tr>
+  <td><a href="{% url 'gestante' g.id %}">{{ g.nome }}</a><br><small class="mono">{{ g.cpf_mascarado|default:"sem CPF" }}{% if g.cns %} · CNS ···{{ g.cns|slice:'-4:' }}{% endif %}</small></td>
+  <td><span class="etiqueta {{ g.situacao }}">{{ g.get_situacao_display }}</span></td>
+  <td>{{ g.unidade.nome|default:"—" }}</td><td>{{ g.equipe.nome|default:"—" }}</td>
+  <td>{{ g.dum|date:"d/m/Y"|default:"—" }}</td><td>{{ g.ultimo_atendimento|date:"d/m/Y"|default:"—" }}</td><td>{{ g.situacao_desde|date:"d/m/Y" }}</td>
+</tr>{% empty %}<tr><td colspan="7" class="vazio"><img class="ilustra" src="{% static 'fm/ilustra-vazio.svg' %}" alt="" width="220" height="140">Nenhuma gestante com esses filtros.{% if f.situacao == 'pendentes' and f.unidade %} <strong>Esta unidade está em dia.</strong>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% if paginas > 1 %}<nav class="paginacao" aria-label="Páginas">{% if pagina > 1 %}<a href="?{{ query }}&p={{ pagina|add:'-1' }}">← Anterior</a>{% endif %}<span>{{ pagina }} / {{ paginas }}</span>{% if pagina < paginas %}<a href="?{{ query }}&p={{ pagina|add:'1' }}">Próxima →</a>{% endif %}</nav>{% endif %}
+{% endblock %}

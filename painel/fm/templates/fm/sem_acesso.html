@@ -1,0 +1,3 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Sem acesso{% endblock %}
+{% block conteudo %}<div class="painel centro"><img class="ilustra" src="{% static 'fm/ilustra-sem-acesso.svg' %}" alt="" width="260" height="180"><h2>Seu usuário não tem permissão para este painel.</h2>{% if SSO_ATIVO %}<p>O acesso pelo {{ SSO_NOME }} depende dos grupos configurados pelo administrador. Peça a inclusão ao responsável pelo Filhos de Minas na {{ ORGAO }}.</p><p><a class="botao" href="{% url 'sair' %}">Sair</a> <a class="botao sec" href="/">Tentar de novo</a></p>{% else %}<p>Peça ao administrador do painel para criar ou ativar o seu usuário.</p><p><a class="botao" href="/">Voltar</a></p>{% endif %}</div>{% endblock %}

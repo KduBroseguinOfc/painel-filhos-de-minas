@@ -1,0 +1,20 @@
+# Coleta do painel: le o extrator (somente leitura) e o DW, atualiza a foto das gestantes. Disparada pelo timer :50.
+[Unit]
+Description=Painel Filhos de Minas - coleta horaria
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/python manage.py coletar
+ExecStartPost=/opt/painel-filhosdeminas/venv/bin/python manage.py avaliar_alertas hora
+Nice=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas
+ReadOnlyPaths=-/opt/extrator-esus/.extrator-pec-esus/data -/opt/extrator-esus/logs

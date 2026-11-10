@@ -1,0 +1,16 @@
+{% extends "fm/base.html" %}
+{% block cabecalho %}Vincular Telegram{% endblock %}
+{% block conteudo %}
+<div class="painel">
+{% if v.chat_id %}<p><span class="etiqueta aceita">Vinculado</span> em {{ v.verificado_em|date:"d/m/Y H:i" }}.</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="acao" value="desvincular"><button class="botao sec" type="submit">Desvincular</button></form>
+{% else %}
+<ol class="passos">
+  <li>No Telegram, abra o robô <strong>{{ bot }}</strong> (<a href="https://t.me/{{ bot|cut:"@" }}" rel="noopener">t.me/{{ bot|cut:"@" }}</a>) e toque em Iniciar.</li>
+  <li>Envie a mensagem: <code class="mono grande">/vincular {{ v.codigo }}</code></li>
+  <li>Volte aqui e recarregue a página. O código vale só para a sua conta.</li>
+</ol>
+<form method="post">{% csrf_token %}<input type="hidden" name="acao" value="novo_codigo"><button class="botao sec" type="submit">Gerar outro código</button></form>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Painel Filhos de Minas - geocodificacao noturna
+
+[Timer]
+OnCalendar=*-*-* 02:10:00
+Persistent=true
+Unit=painel-filhosdeminas-geo.service
+
+[Install]
+WantedBy=timers.target

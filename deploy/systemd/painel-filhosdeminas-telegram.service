@@ -1,0 +1,21 @@
+[Unit]
+Description=Painel Filhos de Minas - bot do Telegram (long polling)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/python manage.py telegram_ouvir
+Restart=always
+RestartSec=15
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+{% extends "fm/base.html" %}
+{% block cabecalho %}Entrar{% endblock %}
+{% block conteudo %}<form method="post" class="formulario painel estreito">{% csrf_token %}{% if erro %}<div class="aviso aviso-vermelho">{{ erro }}</div>{% endif %}
+<div class="campo"><label for="u">Usuário</label><input id="u" name="usuario" autocomplete="username" autocapitalize="none" required></div>
+<div class="campo"><label for="s">Senha</label><input id="s" type="password" name="senha" autocomplete="current-password" required></div>
+<button class="botao" type="submit">Entrar</button>{% if SSO_ATIVO %} <a class="botao sec" href="{% url 'entrar' %}">Entrar pelo {{ SSO_NOME }}</a>{% endif %}</form>{% endblock %}

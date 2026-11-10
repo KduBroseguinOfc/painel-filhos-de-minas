@@ -1,0 +1,7 @@
+{
+ "_comentario": "OPCIONAL. O painel geocodifica as unidades pelo endereco do cadastro no PEC (Nominatim/OpenStreetMap). Quando o endereco do PEC esta velho ou o ponto cai no centro da cidade, informe aqui a coordenada conferida (Google Maps, OpenStreetMap) e a fonte; aplique com: manage.py fixar_ubs /etc/painel-filhosdeminas/ubs-coordenadas.json. Unidade com coordenada fixada nao e mais tocada pela geocodificacao automatica.",
+ "unidades": [
+  {"cnes": "0000000", "nome": "Unidade de Saude Exemplo", "lat": -19.0000, "lon": -42.0000, "fonte": "Google Maps 2026-01-01 (pino da unidade)"},
+  {"cnes": "0000001", "nome": "Unidade de Saude Exemplo II", "lat": -19.0100, "lon": -42.0100, "fonte": "OpenStreetMap", "conferir": "mudou de predio em 2025"}
+ ]
+}

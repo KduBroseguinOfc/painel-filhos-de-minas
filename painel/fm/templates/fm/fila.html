@@ -1,0 +1,26 @@
+{% extends "fm/base.html" %}{% load static humanize %}
+{% block cabecalho %}Fila de trabalho{% endblock %}
+{% block topo_dir %}<form method="get" class="topo-filtro"><select name="unidade" data-submit><option value="">Todas as UBS</option>{% for u in unidades %}<option value="{{ u.id }}" {% if f.unidade == u.id|stringformat:'s' %}selected{% endif %}>{{ u.nome_curto }}</option>{% endfor %}</select></form>{% endblock %}
+{% block conteudo %}
+<p class="sub">O que a unidade precisa fazer hoje, por ordem de urgência. Só gestações em curso (até 42 semanas); cada bloco mostra as {{ limite }} mais urgentes e o total. Clique no título para abrir a lista completa com os filtros certos.</p>
+<section class="cartoes" aria-label="Resumo da fila">
+{% for b in blocos %}<a class="cartao {{ b.cor }}" href="#{{ b.chave }}"><span class="rotulo">{{ b.titulo }}</span><span class="numero" data-contador="{{ b.total }}">{{ b.total|intcomma }}</span></a>{% endfor %}
+</section>
+{% for b in blocos %}
+<section class="painel fila" id="{{ b.chave }}">
+  <h2><a href="{{ b.link }}">{{ b.titulo }} <small>({{ b.total }})</small></a></h2>
+  <p class="sub">{{ b.acao }}</p>
+  {% if b.itens %}<div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Gestante</th><th>Situação</th><th>UBS / equipe</th><th class="num">Semanas</th><th>Último atend.</th><th>Desde</th></tr></thead><tbody>
+  {% for g in b.itens %}<tr>
+    <td><a href="{% url 'gestante' g.id %}">{{ g.nome }}</a>{% if g.risco_hipertensao or g.risco_diabetes or g.gestacao_multipla %} <span class="etiqueta erro_api" title="gestação de risco">risco</span>{% endif %}</td>
+    <td><span class="etiqueta {{ g.situacao }}">{{ g.get_situacao_display }}</span>{% if g.sugestao %}<br><small title="Dado obtido por cruzamento com o {{ g.sugestao.fonte }}, ainda não validado: confirmar no CadSUS pelo CPF e só então gravar no cadastro do PEC"><strong>Confirmar no CadSUS e cadastrar no PEC</strong> o CNS encontrado no {{ g.sugestao.fonte }}: <span class="mono">{{ g.sugestao.cns }}</span>{% if not g.sugestao.confere %} <span class="etiqueta erro_api">nome ou nascimento diferem: conferir com cuidado</span>{% endif %}</small>{% endif %}</td>
+    <td>{{ g.unidade.nome_curto|default:"—" }} / {{ g.equipe.nome|default:"—" }}</td>
+    <td class="num">{% if g.semanas is not None %}{{ g.semanas }}{% else %}—{% endif %}</td>
+    <td>{{ g.ultimo_atendimento|date:"d/m/Y"|default:"—" }}{% if g.dias_sem_consulta %} <small>({{ g.dias_sem_consulta }} d)</small>{% endif %}</td>
+    <td>{{ g.situacao_desde|date:"d/m/Y" }}</td>
+  </tr>{% endfor %}</tbody></table></div>
+  {% if b.total > b.itens|length %}<p class="sub"><a href="{{ b.link }}">Ver as {{ b.total }} na lista completa →</a></p>{% endif %}
+  {% else %}<p class="vazio">Nada pendente neste bloco.</p>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}

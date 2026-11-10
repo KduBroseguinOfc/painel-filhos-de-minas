@@ -1,0 +1,10 @@
+{% extends "fm/base.html" %}
+{% block titulo %}Usuários{% endblock %}
+{% block cabecalho %}Usuários{% endblock %}
+{% block topo_dir %}<a class="botao" href="{% url 'usuario_novo' %}">Novo usuário</a>{% endblock %}
+{% block conteudo %}
+<section class="painel"><p class="sub">Todo usuário vê todas as unidades. O administrador também cria e edita usuários e vê a trilha de acesso (Situação do sistema).{% if SSO_ATIVO %} Usuários que entram pelo {{ SSO_NOME }} aparecem aqui depois do primeiro login; nome, e-mail e papel vêm do provedor.{% endif %}</p>
+<div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Usuário</th><th>Nome</th><th>E-mail</th><th>Papel</th><th>Origem</th><th>Ativo</th><th>Último acesso</th><th></th></tr></thead><tbody>
+{% for u in usuarios %}<tr><td>{{ u.username }}</td><td>{{ u.get_full_name }}</td><td>{{ u.email }}</td><td>{% if u.is_superuser %}Administrador{% else %}Visualização{% endif %}</td><td>{% if u.perfil.origem == 'sso' %}{{ SSO_NOME }}{% else %}painel{% endif %}</td><td>{% if u.is_active %}sim{% else %}<strong>não</strong>{% endif %}</td><td>{{ u.last_login|date:"d/m/Y H:i"|default:"—" }}</td><td>{% if u.perfil.origem != 'sso' %}<a href="{% url 'usuario_editar' u.pk %}">Editar</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="8">Nenhum usuário.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Painel Filhos de Minas - coleta 10 min depois de cada rotina do extrator (rotina :00, dura ~35 min)
+
+[Timer]
+OnCalendar=*-*-* *:50:00
+Persistent=true
+Unit=painel-filhosdeminas-coleta.service
+
+[Install]
+WantedBy=timers.target

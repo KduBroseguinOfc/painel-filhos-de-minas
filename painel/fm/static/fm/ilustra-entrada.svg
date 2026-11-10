@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Gestante com coração e gráfico">
+  <ellipse cx="160" cy="205" rx="120" ry="11" fill="#1e40af" opacity=".12"/>
+  <rect x="190" y="60" width="100" height="90" rx="10" fill="#fff" stroke="#3b82f6" stroke-width="4"/>
+  <g fill="#3b82f6"><rect x="205" y="110" width="14" height="28" rx="3"/><rect x="226" y="95" width="14" height="43" rx="3"/><rect x="247" y="80" width="14" height="58" rx="3" fill="#16a34a"/><rect x="268" y="100" width="12" height="38" rx="3" fill="#d4af37"/></g>
+  <circle cx="110" cy="62" r="24" fill="#1e40af"/>
+  <path d="M74 190c-6-50 2-88 36-88s42 38 36 88z" fill="#3b82f6"/>
+  <circle cx="122" cy="140" r="26" fill="#60a5fa"/>
+  <path d="M122 150c-1 0-2-.4-2.6-1.1l-6.4-6.4c-2.1-2.1-2.3-5.5-.4-7.7 1.9-2.2 5.2-2.5 7.5-.7l1.9 1.5 1.9-1.5c2.3-1.8 5.6-1.5 7.5.7 1.9 2.2 1.7 5.6-.4 7.7l-6.4 6.4c-.6.7-1.6 1.1-2.6 1.1z" fill="#fff"/>
+  <circle cx="48" cy="80" r="8" fill="#d4af37" opacity=".5"/><circle cx="292" cy="40" r="6" fill="#16a34a" opacity=".4"/>
+</svg>

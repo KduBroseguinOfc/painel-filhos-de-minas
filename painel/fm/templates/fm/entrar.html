@@ -1,0 +1,7 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Entrar{% endblock %}
+{% block conteudo %}<div class="painel centro"><img class="ilustra" src="{% static 'fm/ilustra-entrada.svg' %}" alt="" width="260" height="180">
+<h2>Painel Filhos de Minas · {{ MUNICIPIO }}</h2>
+<p><a class="botao" href="{% url 'oidc_authentication_init' %}">Entrar pelo {{ SSO_NOME }}</a></p>
+{% if local_ok %}<p><a class="botao sec" href="{% url 'entrar_local' %}">Entrar com usuário do painel</a></p>{% endif %}
+</div>{% endblock %}

@@ -1,0 +1,59 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>{% block titulo %}Filhos de Minas{% endblock %} · Painel</title>
+<link rel="stylesheet" href="{% static 'fm/fm.css' %}">
+<link rel="icon" href="{% url 'logo' %}" data-base="{% url 'logo' %}">
+</head>
+<body data-estado="{{ ESTADO_SISTEMA }}">
+<a class="pular" href="#conteudo">Ir para o conteúdo</a>
+<div class="app">
+  <aside class="lateral" id="lateral">
+    <div class="marca">
+      <img src="{% url 'logo' %}" alt="" width="36" height="36">
+      <div><strong>Filhos de Minas</strong><small>Acompanhamento do envio · {{ MUNICIPIO }}</small></div>
+    </div>
+    <nav aria-label="Principal">
+      <a href="{% url 'visao' %}" {% if request.resolver_match.url_name == 'visao' %}aria-current="page"{% endif %}><span class="ic">▦</span>Visão geral</a>
+      <a href="{% url 'ubs' %}" {% if request.resolver_match.url_name|slice:':3' == 'ubs' %}aria-current="page"{% endif %}><span class="ic">⌂</span>Por UBS e equipe</a>
+      {% with rec=request.GET.recorte|default:'' nov=request.GET.novas|default:'' par=request.GET.parto|default:'' %}
+      <a href="{% url 'gestantes' %}" {% if request.resolver_match.url_name == 'gestante' or request.resolver_match.url_name == 'gestantes' and rec == '' and nov == '' and par == '' %}aria-current="page"{% endif %}><span class="ic">☷</span>Gestantes</a>
+      <a href="{% url 'gestantes' %}?recorte=novas" {% if request.resolver_match.url_name == 'gestantes' and rec == 'novas' or nov == '1' %}aria-current="page"{% endif %}><span class="ic">✚</span>Novas na semana</a>
+      <a href="{% url 'gestantes' %}?recorte=parto" {% if request.resolver_match.url_name == 'gestantes' and rec == 'parto' or par == '1' %}aria-current="page"{% endif %}><span class="ic">◷</span>Perto do parto</a>
+      {% endwith %}
+      <a href="{% url 'fila' %}" {% if request.resolver_match.url_name == 'fila' %}aria-current="page"{% endif %}><span class="ic">☑</span>Fila de trabalho</a>
+      <a href="{% url 'desempenho' %}" {% if request.resolver_match.url_name == 'desempenho' %}aria-current="page"{% endif %}><span class="ic">▲</span>Desempenho</a>
+      <a href="{% url 'indicadores' %}" {% if request.resolver_match.url_name == 'indicadores' %}aria-current="page"{% endif %}><span class="ic">▤</span>Indicadores</a>
+      <a href="{% url 'mapa' %}" {% if request.resolver_match.url_name == 'mapa' %}aria-current="page"{% endif %}><span class="ic">⌖</span>Mapa</a>
+      <a href="{% url 'alertas' %}" {% if request.resolver_match.url_name|slice:':6' == 'alerta' or request.resolver_match.url_name == 'telegram' %}aria-current="page"{% endif %}><span class="ic">🔔</span>Meus alertas</a>
+      <a href="{% url 'situacao' %}" {% if request.resolver_match.url_name == 'situacao' %}aria-current="page"{% endif %}><span class="ic">♥</span>Situação do sistema</a>
+      {% if E_ADMIN %}<a href="{% url 'usuarios' %}" {% if request.resolver_match.url_name|slice:':7' == 'usuario' %}aria-current="page"{% endif %}><span class="ic">☺</span>Usuários</a>{% endif %}
+    </nav>
+    <div class="lateral-rodape">
+      <button type="button" class="tema" id="tema" aria-label="Trocar o tema (automático, escuro, claro)" title="Clique para trocar: automático → escuro → claro"><span data-claro>☀ Tema: claro</span><span data-escuro>☾ Tema: escuro</span><span data-auto>◐ Tema: automático</span></button>
+      {% if user.is_authenticated %}<div class="usuario"><strong>{{ user.get_full_name|default:user.username }}</strong><small>{{ user.username }}</small></div>{% endif %}
+    </div>
+  </aside>
+  <div class="principal">
+    <header class="topo">
+      <button type="button" class="menu" id="menu" aria-label="Abrir menu" aria-controls="lateral" aria-expanded="false">☰</button>
+      <h1>{% block cabecalho %}{% endblock %}</h1>
+      <div class="topo-dir">{% block topo_dir %}{% endblock %}{% if user.is_authenticated %}<a class="botao sec sair" href="{% url 'sair' %}" title="Encerra a sessão">Sair</a>{% endif %}</div>
+    </header>
+    <main id="conteudo" class="conteudo">
+      {% if messages %}{% for m in messages %}<div class="aviso aviso-{{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+      {% block conteudo %}{% endblock %}
+    </main>
+    <footer class="rodape">{{ PREFEITURA }} · {{ ORGAO }} · Dados do PEC e-SUS e da API do Filhos de Minas (SES-MG). Uso restrito: dados pessoais e de saúde (LGPD).</footer>
+  </div>
+</div>
+<div class="sombra" id="sombra" hidden></div>
+{% block json %}{% endblock %}
+<script src="{% static 'fm/fm.js' %}" defer></script>
+<script src="{% static 'fm/favicon.js' %}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

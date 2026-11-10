@@ -1,0 +1,16 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Mapa{% endblock %}
+{% block topo_dir %}<span class="chip">{{ geo }} de {{ total }} com endereço no mapa · {{ ubs_geo }}/{{ ubs_total }} UBS</span>{% endblock %}
+{% block conteudo %}
+<div class="filtros mapa-filtros">
+  <label>UBS <select id="m-unidade"><option value="">Todas</option>{% for u in unidades %}<option value="{{ u.id }}">{{ u.nome_curto }}</option>{% endfor %}</select></label>
+  <label>Situação <select id="m-situacao"><option value="">Todas</option><option value="pendentes">Todas as pendentes</option>{% for k, v in situacoes %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+  <label>Camada <select id="m-camada"><option value="ambos">Calor + pontos</option><option value="pontos">Só pontos</option><option value="calor">Só calor</option></select></label>
+  <label>Cor dos pontos <select id="m-cor"><option value="situacao">Por situação</option><option value="ubs">Por UBS</option></select></label>
+  <label>Raio do calor <input type="range" id="m-raio" min="10" max="60" value="32"></label>
+  <label>Transparência <input type="range" id="m-transp" min="0" max="80" value="20"></label>
+</div>
+<div class="painel mapa-painel"><div id="mapa" class="mapa" role="application" aria-label="Mapa das gestantes"></div><div id="m-legenda" class="legenda-box" aria-label="Legenda"></div></div>
+<p class="sub">Quem não tem endereço em nenhuma ficha aparece em <a href="{% url 'gestantes' %}?end=nao">Gestantes → Endereço: sem endereço no e-SUS</a>, por UBS, para completar o cadastro. O ponto da casa vem do endereço das fichas de cadastro do PEC (rua, bairro e CEP), geocodificado no OpenStreetMap; quem não tem endereço legível aparece agregada no ponto da sua UBS. Sem nome no mapa: clique no pino para abrir o cadastro (registrado na trilha).</p>
+{% endblock %}
+{% block scripts %}<link rel="stylesheet" href="{% static 'fm/leaflet/leaflet.css' %}"><script src="{% static 'fm/leaflet/leaflet.js' %}" defer></script><script src="{% static 'fm/leaflet/leaflet-heat.js' %}" defer></script><script src="{% static 'fm/mapa.js' %}" defer></script>{% endblock %}

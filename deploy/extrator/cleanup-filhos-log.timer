@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer de limpeza do log do Filhos de Minas
+
+[Timer]
+OnCalendar=*:0/10
+Persistent=true
+Unit=cleanup-filhos-log.service
+
+[Install]
+WantedBy=timers.target

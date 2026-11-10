@@ -1,0 +1,18 @@
+# Conferencia diaria com a API do Filhos de Minas (SES-MG), somente leitura: 1 gestante/s, ~15 min. Timer 05:30.
+[Unit]
+Description=Painel Filhos de Minas - conferencia diaria com a SES-MG
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/python manage.py conferir_ses
+Nice=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas

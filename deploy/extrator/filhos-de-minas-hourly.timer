@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer horario do Extrator PEC e-SUS - Filhos de Minas
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=filhos-de-minas-hourly.service
+
+[Install]
+WantedBy=timers.target

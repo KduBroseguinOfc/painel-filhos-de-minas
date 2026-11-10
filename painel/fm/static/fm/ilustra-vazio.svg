@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Prancheta com lista concluída">
+  <ellipse cx="160" cy="185" rx="110" ry="10" fill="#1e40af" opacity=".12"/>
+  <rect x="100" y="30" width="120" height="150" rx="10" fill="#fff" stroke="#3b82f6" stroke-width="4"/>
+  <rect x="130" y="18" width="60" height="24" rx="8" fill="#1e40af"/><rect x="146" y="12" width="28" height="14" rx="6" fill="#d4af37"/>
+  <g stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"><line x1="135" y1="75" x2="195" y2="75"/><line x1="135" y1="105" x2="195" y2="105"/><line x1="135" y1="135" x2="185" y2="135"/></g>
+  <g fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M115 75l6 6 11-12"/><path d="M115 105l6 6 11-12"/><path d="M115 135l6 6 11-12"/></g>
+  <circle cx="60" cy="60" r="9" fill="#16a34a" opacity=".35"/><circle cx="262" cy="48" r="6" fill="#d4af37" opacity=".6"/><circle cx="276" cy="140" r="10" fill="#3b82f6" opacity=".25"/>
+</svg>

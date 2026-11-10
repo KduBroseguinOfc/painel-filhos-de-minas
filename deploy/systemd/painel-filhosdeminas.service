@@ -1,0 +1,24 @@
+# /etc/systemd/system/painel-filhosdeminas.service
+[Unit]
+Description=Painel Filhos de Minas (acompanhamento do envio de gestantes a SES-MG)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/gunicorn painel.wsgi:application --bind 127.0.0.1:8010 --workers 2 --worker-class gthread --threads 4 --timeout 60 --access-logfile - --forwarded-allow-ips 127.0.0.1
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas
+ReadOnlyPaths=-/opt/extrator-esus/.extrator-pec-esus/data -/opt/extrator-esus/logs
+
+[Install]
+WantedBy=multi-user.target

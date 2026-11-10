@@ -1,0 +1,17 @@
+[Unit]
+Description=Painel Filhos de Minas - geocodificacao noturna (Nominatim, 1 consulta/s)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=painelfm
+Group=painelfm
+WorkingDirectory=/opt/painel-filhosdeminas/app
+EnvironmentFile=/etc/painel-filhosdeminas/env
+ExecStart=/opt/painel-filhosdeminas/venv/bin/python manage.py geocodificar --limite 400
+Nice=15
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/painel-filhosdeminas

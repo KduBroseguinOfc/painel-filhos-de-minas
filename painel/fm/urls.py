@@ -1,0 +1,33 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.visao_geral, name="visao"),
+    path("ubs/", views.ubs, name="ubs"),
+    path("ubs/<int:pk>/", views.ubs_detalhe, name="ubs_detalhe"),
+    path("gestantes/", views.gestantes, name="gestantes"),
+    path("gestantes/<int:pk>/", views.gestante, name="gestante"),
+    path("gestantes/<int:pk>/cpf/", views.revelar_cpf, name="revelar_cpf"),
+    path("indicadores/", views.indicadores, name="indicadores"),
+    path("fila/", views.fila, name="fila"),
+    path("desempenho/", views.desempenho, name="desempenho"),
+    path("tv/", views.tv, name="tv"),
+    path("mapa/", views.mapa, name="mapa"),
+    path("mapa/pontos.json", views.mapa_pontos, name="mapa_pontos"),
+    path("ubs/foto/<str:cnes>/", views.ubs_foto, name="ubs_foto"),
+    path("alertas/", views.alertas, name="alertas"),
+    path("alertas/novo/", views.alerta_form, name="alerta_novo"),
+    path("alertas/<int:pk>/", views.alerta_form, name="alerta_editar"),
+    path("alertas/<int:pk>/apagar/", views.alerta_apagar, name="alerta_apagar"),
+    path("telegram/", views.telegram, name="telegram"),
+    path("situacao/", views.situacao, name="situacao"),
+    path("sem-acesso/", views.sem_acesso, name="sem_acesso"),
+    path("sair/", views.sair, name="sair"),
+    path("entrar/", views.entrar, name="entrar"),
+    path("entrar-local/", views.entrar_local, name="entrar_local"),
+    path("logo", views.logo, name="logo"),
+    path("usuarios/", views.usuarios, name="usuarios"),
+    path("usuarios/novo/", views.usuario_form, name="usuario_novo"),
+    path("usuarios/<int:pk>/", views.usuario_form, name="usuario_editar"),
+    path("saude", views.saude, name="saude"),
+]

@@ -1,0 +1,10 @@
+PAINEL FILHOS DE MINAS
+{{ cabecalho }}
+{% for b in blocos %}
+{{ b.titulo|upper }}
+{% for l in b.linhas %}{{ l }}
+{% endfor %}{{ b.rotulo }}: {{ b.link }}
+{% endfor %}
+--
+{{ rodape }}
+Alterar ou desligar alertas: {{ url }}/alertas/

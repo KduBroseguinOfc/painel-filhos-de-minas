@@ -1,0 +1,14 @@
+{% extends "fm/base.html" %}
+{% block titulo %}{% if obj %}Usuário {{ obj.username }}{% else %}Novo usuário{% endif %}{% endblock %}
+{% block cabecalho %}{% if obj %}Usuário {{ obj.username }}{% else %}Novo usuário{% endif %}{% endblock %}
+{% block conteudo %}
+{% if senha_nova %}<section class="painel"><div class="aviso aviso-verde"><strong>Senha de {{ obj.username }}:</strong> <code class="senha">{{ senha_nova }}</code><br><small>Copie agora e entregue ao usuário por um canal seguro. Ela não será mostrada de novo; se perder, use "Redefinir senha".</small></div><p><a class="botao" href="{% url 'usuarios' %}">Voltar à lista</a></p></section>
+{% else %}
+<form method="post" class="formulario painel estreito">{% csrf_token %}
+{% if form.non_field_errors %}<div class="aviso aviso-vermelho">{{ form.non_field_errors }}</div>{% endif %}
+{% for f in form %}<div class="campo{% if f.errors %} erro{% endif %}">{% if f.field.widget.input_type == 'checkbox' and f.name == 'is_active' %}<label>{{ f }} {{ f.label }}</label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endif %}{% if f.help_text %}<small class="sub">{{ f.help_text }}</small>{% endif %}{% for e in f.errors %}<small class="erro-msg">{{ e }}</small>{% endfor %}</div>{% endfor %}
+<button class="botao" type="submit">{% if obj %}Salvar{% else %}Criar e gerar a senha{% endif %}</button> <a class="botao sec" href="{% url 'usuarios' %}">Cancelar</a>
+</form>
+{% if obj %}<form method="post" class="painel estreito">{% csrf_token %}<input type="hidden" name="acao" value="redefinir"><p class="sub">Gera uma senha nova para este usuário e mostra uma única vez.</p><button class="botao sec" type="submit">Redefinir senha</button></form>{% endif %}
+{% endif %}
+{% endblock %}

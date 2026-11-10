@@ -1,0 +1,29 @@
+{% load static humanize %}<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="refresh" content="120">
+<title>Filhos de Minas · TV</title>
+<link rel="stylesheet" href="{% static 'fm/fm.css' %}">
+<link rel="icon" href="{% url 'logo' %}">
+</head>
+<body class="tv">
+<header class="tv-topo"><img src="{% url 'logo' %}" alt="" width="48" height="48"><div><strong>Filhos de Minas · {{ MUNICIPIO }}</strong><small>Dados de {{ coleta.fim|date:"d/m H:i" }} · atualiza sozinho a cada 2 min · <a href="{% url 'visao' %}">sair do modo TV</a></small></div></header>
+<main class="tv-cartoes">
+  <div class="cartao"><span class="rotulo">Gestantes no recorte</span><span class="numero">{{ c.no_recorte|intcomma }}</span></div>
+  <div class="cartao ok"><span class="rotulo">Aceitas pela SES-MG</span><span class="numero">{{ c.aceita|intcomma }}</span><span class="sub">+{{ aceitas_semana }} na semana</span></div>
+  <div class="cartao alerta"><span class="rotulo">Pendentes com gestação em curso</span><span class="numero">{{ c.pendentes_curso|intcomma }}</span><span class="sub">sem CNS {{ c.sem_cns }} · fora do Bolsa {{ c.fora_bolsa }} · sem CPF {{ c.sem_cpf }}</span></div>
+  <div class="cartao neutro"><span class="rotulo">Parto provável, ainda pendentes</span><span class="numero">{{ c.parto_provavel|intcomma }}</span></div>
+  <div class="cartao neutro"><span class="rotulo">Fora do recorte</span><span class="numero">{{ c.fora_recorte|intcomma }}</span><span class="sub">DUM há mais de 1 ano</span></div>
+  <div class="cartao {% if rotina and rotina.enviados %}ok{% endif %}"><span class="rotulo">Última rotina do extrator</span><span class="numero">{% if rotina %}{{ rotina.inicio|date:"H:i" }}{% else %}—{% endif %}</span><span class="sub">{% if rotina %}{{ rotina.enviados }} aceites · {{ rotina.erros }} recusas{% endif %}</span></div>
+</main>
+<section class="tv-lista">
+  <h2>UBS com mais pendências em curso</h2>
+  <ol>{% for u in ubs_top %}<li><span>{{ u.nome }}</span><strong>{{ u.n }}</strong></li>{% endfor %}</ol>
+</section>
+<footer class="tv-rodape">{{ PREFEITURA }} · {{ ORGAO }} · uso interno</footer>
+<script src="{% static 'fm/favicon.js' %}" defer></script>
+</body>
+</html>

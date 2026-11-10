@@ -1,0 +1,10 @@
+[Unit]
+Description=Painel Filhos de Minas - resumo diario dos alertas
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+Unit=painel-filhosdeminas-alertas-dia.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Limpeza do log do Filhos de Minas quando atingir 100MB
+
+[Service]
+Type=oneshot
+User=extrator
+Group=extrator
+WorkingDirectory=/opt/extrator-esus
+Environment=HOME=/opt/extrator-esus
+ExecStart=/opt/extrator-esus/bin/cleanup_filhos_log.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,44 @@
+{% extends "fm/base.html" %}
+{% block cabecalho %}{% if obj %}Editar alerta{% else %}Novo alerta{% endif %}{% endblock %}
+{% block conteudo %}
+<form method="post" class="formulario painel form-alerta" id="form-alerta">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="campo {% if form.nome.errors %}com-erro{% endif %}"><label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>{{ form.nome }}{% for e in form.nome.errors %}<small class="erro">{{ e }}</small>{% endfor %}<small class="sub">Exemplo: "Sem CNS na UBS Panorama".</small></div>
+
+  <fieldset class="grupo"><legend>1. O que acompanhar</legend>
+    <div class="campo"><span class="rotulo-campo">{{ form.unidades.label }}</span><div class="escolhas rolagem">{{ form.unidades }}</div>{% for e in form.unidades.errors %}<small class="erro">{{ e }}</small>{% endfor %}</div>
+    <div class="campo"><span class="rotulo-campo">{{ form.situacoes.label }}</span><div class="escolhas">{{ form.situacoes }}</div></div>
+    <div class="campo {% if form.eventos.errors %}com-erro{% endif %}"><span class="rotulo-campo">{{ form.eventos.label }}</span><div class="escolhas uma-coluna">{{ form.eventos }}</div>{% for e in form.eventos.errors %}<small class="erro">{{ e }}</small>{% endfor %}</div>
+  </fieldset>
+
+  <fieldset class="grupo"><legend>2. Por onde avisar</legend>
+    <div class="canais">
+      <div class="canal {% if form.por_email.errors %}com-erro{% endif %}">
+        <label class="marcar">{{ form.por_email }} <strong>E-mail</strong></label>
+        <div class="canal-detalhe" id="detalhe-email">
+          <label for="{{ form.destino.id_for_label }}">{{ form.destino.label }}</label>{{ form.destino }}
+          <small class="sub">Vazio = o e-mail do seu usuário{% if user.email %} ({{ user.email }}){% endif %}.</small>
+          {% for e in form.destino.errors %}<small class="erro">{{ e }}</small>{% endfor %}
+        </div>
+        {% for e in form.por_email.errors %}<small class="erro">{{ e }}</small>{% endfor %}
+      </div>
+      <div class="canal {% if form.por_telegram.errors %}com-erro{% endif %}">
+        <label class="marcar">{{ form.por_telegram }} <strong>Telegram</strong> <small>({{ bot }})</small></label>
+        <div class="canal-detalhe">
+          {% if form.telegram_vinculado %}<span class="etiqueta aceita">vinculado ao seu usuário</span> <small class="sub"><a href="{% url 'telegram' %}">gerenciar</a></small>
+          {% else %}<div class="aviso aviso-amarelo">Seu Telegram ainda não está vinculado. Abra <a href="https://t.me/{{ bot|cut:'@' }}" rel="noopener">t.me/{{ bot|cut:'@' }}</a>, toque em Iniciar e envie:
+            <code class="mono grande">/vincular {{ form.telegram_codigo }}</code><br><small>Depois volte aqui e salve. <a href="{% url 'telegram' %}">Mais detalhes</a>.</small></div>{% endif %}
+        </div>
+        {% for e in form.por_telegram.errors %}<small class="erro">{{ e }}</small>{% endfor %}
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="grupo"><legend>3. Quando</legend>
+    <div class="campo"><div class="escolhas uma-coluna">{{ form.frequencia }}</div></div>
+    <div class="campo"><label class="marcar">{{ form.ativo }} {{ form.ativo.label }}</label></div>
+  </fieldset>
+
+  <div class="filtros-acoes"><button class="botao" type="submit">Salvar alerta</button> <a class="botao sec" href="{% url 'alertas' %}">Cancelar</a></div>
+</form>
+{% endblock %}

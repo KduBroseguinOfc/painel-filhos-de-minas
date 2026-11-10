@@ -1,0 +1,20 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Situação do sistema{% endblock %}
+{% block json %}<script type="application/json" id="dados-graficos">{{ graficos|safe }}</script>{% endblock %}
+{% block scripts %}<script src="{% static 'fm/chart.umd.min.js' %}" defer></script><script src="{% static 'fm/situacao.js' %}" defer></script>{% endblock %}
+{% block conteudo %}
+<section class="painel"><h2>Rotinas do extrator (48 h): duração e resultado</h2><p class="sub">Cada rotina leva ~30 min (uma chamada por gestante). Duração crescendo ou caindo a zero indica problema no extrator ou na API.</p><div class="grafico"><canvas id="g-rot" role="img" aria-label="Duração e aceites por rotina"></canvas></div></section>
+<section class="grade-2">
+<div class="painel"><h2>Coletas do painel</h2><div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Início</th><th>Duração</th><th>Resultado</th></tr></thead><tbody>
+{% for c in coletas %}<tr><td>{{ c.inicio|date:"d/m H:i" }}</td><td>{% if c.fim %}{{ c.fim|timeuntil:c.inicio }}{% else %}em andamento{% endif %}</td><td>{% if c.ok %}<span class="etiqueta aceita">ok</span>{% else %}<span class="etiqueta erro_api">falhou</span>{% endif %} <small>{{ c.mensagem|truncatechars:120 }}</small></td></tr>{% endfor %}</tbody></table></div></div>
+<div class="painel"><h2>Rotinas do extrator</h2><div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Início</th><th>Fim</th><th class="num">Aceites</th><th class="num">Recusas</th></tr></thead><tbody>
+{% for r in rotinas %}<tr><td>{{ r.inicio|date:"d/m H:i" }}</td><td>{{ r.fim|date:"H:i" }}</td><td class="num {% if r.enviados %}ok{% endif %}">{{ r.enviados }}/{{ r.total }}</td><td class="num">{{ r.erros }}</td></tr>{% endfor %}</tbody></table></div></div>
+</section>
+<section class="painel"><h2>Conferência com a SES-MG</h2>
+{% if conferencia %}<p class="sub">Última conferência: {{ conferencia.quando|date:"d/m/Y H:i" }} · {{ conferencia.n }} gestantes consultadas na API da SES-MG · {{ conferencia.cadastradas }} cadastradas lá · <strong>{{ conferencia.divergencias }} divergências</strong> · {{ conferencia.kits }} com kit entregue{% if conferencia.erros %} · {{ conferencia.erros }} consultas com erro{% endif %}. Roda todo dia às 05:30, só leitura.</p>
+{% if divergentes %}<div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Gestante</th><th>UBS</th><th>Painel</th><th>SES-MG</th><th>Divergência</th></tr></thead><tbody>
+{% for d in divergentes %}<tr><td><a href="{% url 'gestante' d.gestante.id %}">{{ d.gestante.nome }}</a></td><td>{{ d.gestante.unidade.nome_curto|default:"—" }}</td><td><span class="etiqueta {{ d.gestante.situacao }}">{{ d.gestante.get_situacao_display }}</span></td><td>{% if d.cadastrada %}cadastrada · {{ d.status_gravidez|default:"—" }} · {{ d.consultas_ses }} consulta(s){% else %}sem cadastro{% endif %}</td><td><small>{{ d.divergencia }}</small></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="vazio">Nenhuma divergência no seu escopo.</p>{% endif %}
+{% else %}<p class="vazio">Ainda não houve conferência.</p>{% endif %}</section>
+{% if acessos %}<section class="painel"><h2>Últimos acessos (trilha)</h2><div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Detalhe</th></tr></thead><tbody>
+{% for a in acessos %}<tr><td>{{ a.quando|date:"d/m H:i" }}</td><td>{{ a.usuario.username }}</td><td>{{ a.acao }}</td><td><small>{{ a.detalhe|truncatechars:100 }}</small></td></tr>{% endfor %}</tbody></table></div></section>{% endif %}
+{% endblock %}

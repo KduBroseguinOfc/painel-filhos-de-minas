@@ -1,0 +1,25 @@
+{% extends "fm/base.html" %}{% load static %}
+{% block cabecalho %}Por UBS e equipe{% endblock %}
+{% block conteudo %}
+<p class="sub">{{ tot.total }} gestantes · {{ tot.aceita }} aceitas · {{ tot.pendentes }} pendentes ({{ tot.pendentes_curso }} com gestação em curso). Clique na UBS para ver as equipes. Ordenar por:
+{% for k, r in ordens %}{% endfor %}
+<a href="?o=pendentes" {% if ordem == 'pendentes' %}class="ativo"{% endif %}>pendências</a> · <a href="?o=pct" {% if ordem == 'pct' %}class="ativo"{% endif %}>% resolvido</a> · <a href="?o=total" {% if ordem == 'total' %}class="ativo"{% endif %}>total</a> · <a href="?o=nome" {% if ordem == 'nome' %}class="ativo"{% endif %}>nome</a></p>
+<div class="tabela-rolagem"><table class="tabela">
+<thead><tr><th>Unidade</th><th class="num">Elegíveis</th><th class="num">Aceitas</th><th class="num">Sem CNS</th><th class="num">Fora do Bolsa</th><th class="num">Sem CPF</th><th class="num">Erro/aguard.</th><th class="num" title="Pendentes com DUM há mais de 42 semanas (até 1 ano)">Parto provável</th><th class="num" title="Pendentes com gestação em curso (até 42 semanas)">Pend. em curso</th><th class="num" title="DUM há mais de 1 ano: não enviadas">Fora do recorte</th><th class="num">Pendentes</th><th>Resolvido</th><th class="num" title="Gestantes sem endereço em nenhuma ficha do e-SUS: a UBS precisa completar o cadastro">Sem endereço</th></tr></thead>
+<tbody>
+{% for l in linhas %}<tr>
+  <td>{% if l.id %}<a href="{% url 'ubs_detalhe' l.id %}">{{ l.nome }}</a>{% else %}{{ l.nome }}{% endif %}</td>
+  <td class="num">{{ l.total }}</td><td class="num ok">{{ l.aceita }}</td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&situacao=sem_cns">{{ l.sem_cns }}</a></td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&situacao=fora_bolsa">{{ l.fora_bolsa }}</a></td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&situacao=sem_cpf">{{ l.sem_cpf }}</a></td>
+  <td class="num">{{ l.erro_api|add:l.pendente }}</td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&recorte=parto_provavel">{{ l.parto_provavel }}</a></td>
+  <td class="num"><strong><a href="{% url 'gestantes' %}?unidade={{ l.id }}&recorte=curso">{{ l.pendentes_curso }}</a></strong></td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&situacao=fora_recorte">{{ l.fora_recorte }}</a></td>
+  <td class="num"><strong><a href="{% url 'gestantes' %}?unidade={{ l.id }}&situacao=pendentes">{{ l.pendentes }}</a></strong></td>
+  <td><div class="barra" aria-label="{{ l.pct }}% resolvido"><span data-largura="{{ l.pct }}"></span></div><small>{{ l.pct }}%</small></td>
+  <td class="num">{% if l.sem_end %}<a href="{% url 'gestantes' %}?unidade={{ l.id }}&end=nao">{{ l.sem_end }}</a>{% else %}0{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="13" class="vazio"><img class="ilustra" src="{% static 'fm/ilustra-vazio.svg' %}" alt="" width="220" height="140"><br>Nenhuma gestante no seu escopo. <small>Se você deveria ver dados, peça a inclusão no grupo do DAB.</small></td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer semanal da limpeza de logs do banco do Extrator PEC e-SUS (Filhos de Minas)
+
+[Timer]
+OnCalendar=Sun *-*-* 03:45:00
+Persistent=true
+Unit=limpa-logs-banco-filhos.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Limpeza semanal da tabela de logs do banco local do Extrator PEC e-SUS (Filhos de Minas)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=extrator
+Group=extrator
+WorkingDirectory=/opt/extrator-esus
+Environment=HOME=/opt/extrator-esus
+ExecStart=/opt/extrator-esus/bin/limpa_logs_banco.sh 30
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

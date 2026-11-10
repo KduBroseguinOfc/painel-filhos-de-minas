@@ -1,0 +1,46 @@
+{% extends "fm/base.html" %}{% load static humanize %}
+{% block cabecalho %}Indicadores{% endblock %}
+{% block topo_dir %}<form method="get" class="topo-filtro"><select name="unidade" data-submit><option value="">Todas as UBS</option>{% for u in unidades %}<option value="{{ u.id }}" {% if f.unidade == u.id|stringformat:'s' %}selected{% endif %}>{{ u.nome_curto }}</option>{% endfor %}</select></form>{% endblock %}
+{% block conteudo %}
+<p class="sub">{{ total }} gestantes no recorte{% if fora_recorte %} (mais <a href="{% url 'gestantes' %}?situacao=fora_recorte{% if f.unidade %}&unidade={{ f.unidade }}{% endif %}">{{ fora_recorte }} fora do recorte</a>, com DUM há mais de 1 ano, que não entram nos indicadores){% endif %}. Os indicadores clínicos vêm dos atendimentos de pré-natal lidos pelo extrator (DUM, consultas e CID); valem para acompanhamento gerencial, não substituem o prontuário.</p>
+<section class="grade-2">
+  <div class="painel"><h2>Funil do envio</h2><p class="sub">Onde as gestantes se perdem até o aceite pela SES-MG.</p><div class="grafico"><canvas id="g-funil" role="img" aria-label="Funil do envio"></canvas></div>
+    <table class="tabela compacta"><tbody>{% for r, v in funil %}<tr><td>{{ r }}</td><td class="num">{{ v|intcomma }}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="painel"><h2>Captação precoce</h2><p class="sub">Primeira consulta de pré-natal até a 12ª semana.</p>
+    <div class="destaque"><span class="numero">{{ cap.pct }}%</span><span class="sub">{{ cap.precoce }} de {{ cap.n }} gestantes com DUM e 1ª consulta conhecidas</span></div>
+    <div class="grafico pequeno"><canvas id="g-capt" role="img" aria-label="Idade gestacional na primeira consulta"></canvas></div></div>
+</section>
+<section class="grade-2">
+  <div class="painel"><h2>Consultas de pré-natal</h2>
+    <dl class="lista-dados"><dt>Com 6 ou mais consultas</dt><dd>{{ con.seis }} de {{ con.total }}</dd><dt>Sem consulta há mais de 60 dias e ainda pendentes</dt><dd><a href="{% url 'gestantes' %}?situacao=pendentes&o=atd">{{ con.sem60 }}</a> <small>({{ con.sem60_total }} no total, inclusive aceitas)</small></dd></dl>
+    <div class="grafico pequeno"><canvas id="g-cons" role="img" aria-label="Distribuição de consultas"></canvas></div></div>
+  <div class="painel"><h2>Gestação de risco (pelo CID dos atendimentos)</h2>
+    <div class="cartoes mini">
+      <div class="cartao alerta"><span class="rotulo">Hipertensão (O10–O16)</span><span class="numero">{{ ris.hipertensao }}</span></div>
+      <div class="cartao alerta"><span class="rotulo">Diabetes gestacional (O24)</span><span class="numero">{{ ris.diabetes }}</span></div>
+      <div class="cartao neutro"><span class="rotulo">Gestação múltipla</span><span class="numero">{{ ris.multipla }}</span></div>
+      <div class="cartao erro"><span class="rotulo">De risco e ainda pendentes</span><span class="numero">{{ ris.risco_pendente }}</span></div>
+    </div><p class="sub">Depende dos CIDs registrados no atendimento; se o papel de leitura do banco ainda não enxergar a tabela de problemas, aparece zero.</p></div>
+</section>
+<section class="grade-2">
+  <div class="painel"><h2>Faixa etária</h2><p class="sub">Adolescentes (menos de 20) e 35 anos ou mais são gestações de maior atenção. Barras: total e pendentes.</p><div class="grafico pequeno"><canvas id="g-fx" role="img" aria-label="Faixa etária"></canvas></div></div>
+  <div class="painel"><h2>Trimestre atual (pela DUM)</h2><p class="sub">"Provável parto já ocorrido" = mais de 42 semanas e ainda no recorte do extrator: provavelmente não precisa mais de ação.</p><div class="grafico pequeno"><canvas id="g-tri" role="img" aria-label="Trimestre atual"></canvas></div></div>
+</section>
+<section class="grade-2">
+  <div class="painel"><h2>Há quanto tempo estão pendentes</h2><p class="sub">Tempo na situação atual (só pendentes). O que passa de 90 dias precisa de ação na UBS ou é regra do programa.</p><div class="grafico pequeno"><canvas id="g-tempo" role="img" aria-label="Tempo na situação"></canvas></div></div>
+  <div class="painel"><h2>Profissionais com mais gestantes pendentes</h2><p class="sub">Profissional do último atendimento e a UBS onde ele atende: com quem a unidade deve falar.</p>
+    <div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>Profissional</th><th>UBS</th><th class="num">Gestantes</th><th class="num">Pendentes</th></tr></thead><tbody>
+    {% for n, u, uid, t, p in prof %}<tr><td>{{ n }}</td><td>{{ u }}</td><td class="num">{{ t }}</td><td class="num"><a href="{% url 'gestantes' %}?prof={{ n|urlencode }}&unidade={{ uid }}&situacao=pendentes">{{ p }}</a></td></tr>{% empty %}<tr><td colspan="4" class="vazio">Sem dados</td></tr>{% endfor %}</tbody></table></div></div>
+</section>
+<section class="painel"><h2>Exames do pré-natal registrados no PEC</h2><p class="sub">Entre as {{ pre.n }} gestantes em curso com pelo menos uma consulta: procedimento solicitado ou avaliado no PEC a partir de 30 dias antes da DUM. Vacinação não entra: o PEC de Ipatinga deixou de receber registro de vacina em 2025 (vacinação é registrada fora dele).</p>
+<section class="cartoes">{% for nome, n, p in pre.itens %}<div class="cartao {% if p >= 80 %}ok{% elif p >= 50 %}alerta{% else %}erro{% endif %}"><span class="rotulo">{{ nome }}</span><span class="numero">{{ p }}%</span><span class="sub">{{ n }} de {{ pre.n }}</span></div>{% endfor %}
+<div class="cartao"><span class="rotulo">Sífilis + HIV + hepatite B</span><span class="numero">{{ pre.pct_completo }}%</span><span class="sub">{{ pre.completo }} com os três</span></div></section>
+<div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>UBS</th><th class="num">Gestantes</th><th class="num">Sífilis</th><th class="num">HIV</th><th class="num">Hepatite B</th><th class="num">Toxoplasmose</th></tr></thead><tbody>
+{% for nome, n, s, h, b, t in pre.por_ubs %}<tr><td>{{ nome }}</td><td class="num">{{ n }}</td><td class="num">{{ s }}%</td><td class="num">{{ h }}%</td><td class="num">{{ b }}%</td><td class="num">{{ t }}%</td></tr>{% empty %}<tr><td colspan="6" class="vazio">Sem dados</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="painel"><h2>Linha do tempo (12 meses)</h2><p class="sub">Entradas no painel e aceites por mês{% if men.tempo_medio %} · tempo médio do 1º atendimento ao aceite: <strong>{{ men.tempo_medio }} dias</strong> ({{ men.n_tempo }} gestantes){% endif %}.</p><div class="grafico"><canvas id="g-mes" role="img" aria-label="Entradas e aceites por mês"></canvas></div></section>
+<section class="painel"><h2>UBS × motivo (mapa de calor)</h2><p class="sub">Quanto mais escuro, mais gestantes naquela situação. Clique no número para abrir a lista.</p>
+<div class="tabela-rolagem"><table class="tabela compacta calor"><thead><tr><th>UBS</th>{% for c, n in cal.colunas %}<th class="num">{{ n }}</th>{% endfor %}</tr></thead><tbody>
+{% for nome, cels in cal.linhas %}<tr><td>{{ nome }}</td>{% for c, n, v, i in cels %}<td class="num cel-calor" data-int="{{ i }}">{% if v %}<a href="{% url 'gestantes' %}?situacao={{ c }}&q=">{{ v }}</a>{% else %}·{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}
+{% block json %}<script type="application/json" id="dados-graficos">{{ graficos|safe }}</script>{% endblock %}
+{% block scripts %}<script src="{% static 'fm/chart.umd.min.js' %}" defer></script><script src="{% static 'fm/indicadores.js' %}" defer></script>{% endblock %}

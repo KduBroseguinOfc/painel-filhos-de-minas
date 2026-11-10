@@ -1,0 +1,31 @@
+{% extends "fm/base.html" %}{% load static humanize %}
+{% block cabecalho %}Desempenho por UBS{% endblock %}
+{% block json %}<script type="application/json" id="dados-graficos">{{ graficos|safe }}</script>{% endblock %}
+{% block scripts %}<script src="{% static 'fm/chart.umd.min.js' %}" defer></script><script src="{% static 'fm/desempenho.js' %}" defer></script>{% endblock %}
+{% block conteudo %}
+<p class="sub">Quanto cada unidade resolveu: gestantes que saíram de pendente para aceita (pela data do aceite), novas pendentes que entraram, e o tempo médio entre entrar no painel e ser aceita. Só gestações em curso contam como pendência. Posição de {{ hoje|date:"d/m/Y" }}.</p>
+<section class="cartoes" aria-label="Totais">
+  <div class="cartao ok"><span class="rotulo">Resolvidas em 7 dias</span><span class="numero" data-contador="{{ tot.res7 }}">{{ tot.res7|intcomma }}</span></div>
+  <div class="cartao ok"><span class="rotulo">Resolvidas em 30 dias</span><span class="numero" data-contador="{{ tot.res30 }}">{{ tot.res30|intcomma }}</span></div>
+  <div class="cartao alerta"><span class="rotulo">Novas pendentes em 30 dias</span><span class="numero" data-contador="{{ tot.novas30 }}">{{ tot.novas30|intcomma }}</span></div>
+  <div class="cartao"><span class="rotulo">Tempo médio até o aceite</span><span class="numero">{% if tot.tempo %}{{ tot.tempo }} d{% else %}—{% endif %}</span><span class="sub">aceitas nos últimos 30 dias</span></div>
+  <div class="cartao"><span class="rotulo">Pendentes em curso</span><span class="numero" data-contador="{{ tot.curso }}">{{ tot.curso|intcomma }}</span></div>
+</section>
+<section class="grade-2">
+  <div class="painel"><h2>Resolvidas em 30 dias, por UBS</h2><div class="grafico"><canvas id="g-res" role="img" aria-label="Resolvidas por UBS"></canvas></div></div>
+  <div class="painel"><h2>Pendentes em curso × resolvidas (30 d)</h2><div class="grafico"><canvas id="g-pend" role="img" aria-label="Pendentes e resolvidas por UBS"></canvas></div></div>
+</section>
+<section class="painel"><h2>Ranking</h2>
+<div class="tabela-rolagem"><table class="tabela compacta"><thead><tr><th>#</th><th>Unidade</th><th class="num">Elegíveis</th><th class="num">Aceitas</th><th class="num">Pend. em curso</th><th class="num">Resolvidas 7 d</th><th class="num">Resolvidas 30 d</th><th class="num">Novas pend. 30 d</th><th class="num">Tempo médio (d)</th><th>% resolvido</th></tr></thead>
+<tbody>{% for l in linhas %}<tr>
+  <td class="num">{{ forloop.counter }}</td>
+  <td>{% if l.id %}<a href="{% url 'ubs_detalhe' l.id %}">{{ l.nome }}</a>{% else %}{{ l.nome }}{% endif %}</td>
+  <td class="num">{{ l.total }}</td><td class="num ok">{{ l.aceita }}</td>
+  <td class="num"><a href="{% url 'gestantes' %}?unidade={{ l.id }}&recorte=curso">{{ l.curso }}</a></td>
+  <td class="num">{{ l.res7 }}</td><td class="num"><strong>{{ l.res30 }}</strong></td><td class="num">{{ l.novas30 }}</td>
+  <td class="num">{% if l.tempo %}{{ l.tempo }}{% else %}—{% endif %}</td>
+  <td><div class="barra" aria-label="{{ l.pct }}% resolvido"><span data-largura="{{ l.pct }}"></span></div><small>{{ l.pct }}%</small></td>
+</tr>{% empty %}<tr><td colspan="10" class="vazio">Sem dados no seu escopo.</td></tr>{% endfor %}</tbody></table></div>
+<p class="sub">"% resolvido" = aceitas ÷ (aceitas + pendentes em curso). Gestações fora do recorte e com parto provável não entram.</p>
+</section>
+{% endblock %}

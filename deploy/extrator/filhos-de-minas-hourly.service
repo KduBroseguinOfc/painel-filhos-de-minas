@@ -1,0 +1,16 @@
+[Unit]
+Description=Rotina horaria do Extrator PEC e-SUS - Filhos de Minas
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=extrator
+Group=extrator
+WorkingDirectory=/opt/extrator-esus
+Environment=HOME=/opt/extrator-esus
+ExecStart=/opt/extrator-esus/bin/filhos_de_minas_hourly.sh
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
