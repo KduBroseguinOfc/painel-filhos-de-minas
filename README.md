@@ -29,6 +29,20 @@ semana · Perto do parto · Fila de trabalho · Desempenho · Indicadores (funil
 de sífilis/HIV/hepatite B/toxoplasmose) · Mapa (casa das gestantes e UBS, com foto e "como chegar") · Meus alertas ·
 Situação do sistema (rotinas, coletas, conferência com a SES-MG, trilha de acesso) · Usuários · Modo TV.
 
+## Dois cenários (o PEC e-SUS APS o município já tem nos dois)
+
+| Cenário | O que o instalador faz | No `.env` |
+|---|---|---|
+| **1. Já tem o Extrator PEC e-SUS (CLI Linux) rodando** | Instala só o painel na mesma máquina do extrator, dá ao painel leitura (ACL) no banco e no log do extrator, e faz a primeira coleta. O extrator e a rotina dele ficam como estão. Quer as correções no extrator deles? `extrator/aplicar-correcoes.sh`, à parte. | `EXTRATOR_INSTALAR=0`; `EXTRATOR_DB` e `EXTRATOR_LOG` apontando para onde o extrator deles grava (padrão `/opt/extrator-esus/...`) |
+| **2. Não tem o extrator** | Instala o painel **e** o extrator oficial (baixado do site da SES-MG pelo município), aplica as correções, configura (DW, conta da API, responsável), faz a primeira importação e liga a rotina de hora em hora. | `EXTRATOR_INSTALAR=1`, `EXTRATOR_PACOTE=/root/extrator-pec-esus-1.0.0.tgz`, `EXTRATOR_DW_*`, `SES_API_*`, `EXTRATOR_RESP_*` |
+
+O extrator em versão Windows (com tela) em outra máquina **não** serve para o painel: ele lê o banco SQLite do extrator no
+disco local. Nesse caso é o cenário 2 (o extrator CLI Linux passa a rodar junto com o painel, e o Windows é desligado para
+não enviar em dobro).
+
+Nos dois casos as variáveis vão num arquivo **antes** de rodar; o instalador para na primeira obrigatória vazia e diz qual.
+Depois, mudou algo? Edita `/etc/painel-filhosdeminas/env` e `systemctl restart painel-filhosdeminas` (ou roda o instalador de novo).
+
 ## Instalar (Ubuntu Server 24.04, rede interna)
 
 O instalador sobe tudo numa máquina limpa (2 vCPU, 4 GB, 40 GB bastam; o SQLite do extrator cresce com o tempo —
@@ -41,7 +55,7 @@ e publica em `https://<NOME_DNS>` com certificado autoassinado. Pode ser rodado 
    ```
    e libere o IP do painel no `pg_hba.conf` (`host esus painelfm_ro <ip-do-painel>/32 scram-sha-256`, `pg_ctl reload`).
    O extrator também precisa de um usuário de leitura no DW (pode ser outro papel já existente).
-2. **Baixe o Extrator PEC e-SUS** (pacote CLI `.tgz`) em <https://atualizacoes-extrator-pec-esus.saude.mg.gov.br> e
+2. **Cenário 2:** baixe o Extrator PEC e-SUS (pacote CLI `.tgz`) em <https://atualizacoes-extrator-pec-esus.saude.mg.gov.br> e
    tenha a conta da API do Filhos de Minas do seu município (fornecida pela SES-MG).
 3. **Na máquina do painel**, como root:
    ```bash

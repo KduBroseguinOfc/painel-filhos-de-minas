@@ -199,12 +199,21 @@ if [ "$EXTRATOR_INSTALAR" = 1 ]; then
   fi
 fi
 
+# ---------------------------------------------------------------- extrator ja existente nesta maquina (cenario 1): leitura por ACL
+if [ "$EXTRATOR_INSTALAR" != 1 ] && [ -f "$EXTRATOR_DB" ] && ! sudo -u painelfm test -r "$EXTRATOR_DB"; then
+  azul "Extrator ja instalado: liberando leitura do banco e do log para o painel (ACL, so leitura)"
+  d="$(dirname "$EXTRATOR_DB")"; while [ "$d" != "/" ]; do setfacl -m u:painelfm:x "$d"; d="$(dirname "$d")"; done
+  setfacl -m u:painelfm:rx "$(dirname "$EXTRATOR_DB")"; setfacl -m u:painelfm:r "$EXTRATOR_DB"; setfacl -d -m u:painelfm:r "$(dirname "$EXTRATOR_DB")"
+  if [ -f "$EXTRATOR_LOG" ]; then d="$(dirname "$EXTRATOR_LOG")"; while [ "$d" != "/" ]; do setfacl -m u:painelfm:x "$d"; d="$(dirname "$d")"; done; setfacl -m u:painelfm:rx "$(dirname "$EXTRATOR_LOG")"; setfacl -m u:painelfm:r "$EXTRATOR_LOG"; setfacl -d -m u:painelfm:r "$(dirname "$EXTRATOR_LOG")"; fi
+  sudo -u painelfm test -r "$EXTRATOR_DB" && echo "painel le $EXTRATOR_DB"
+fi
+
 # ---------------------------------------------------------------- primeira coleta do painel
 if [ -r "$EXTRATOR_DB" ] || sudo -u painelfm test -r "$EXTRATOR_DB"; then
   azul "Primeira coleta do painel"
   ( cd $APP && sudo -E -u painelfm $VENV/bin/python manage.py coletar 2>&1 | tail -2 ) || echo "coleta falhou agora; o timer tenta de novo aos 50 min de cada hora (journalctl -u painel-filhosdeminas-coleta)"
 else
-  echo "banco do extrator nao encontrado em $EXTRATOR_DB: o painel sobe vazio ate o extrator rodar nesta maquina (EXTRATOR_DB aponta para ele)"
+  echo "banco do extrator nao encontrado em $EXTRATOR_DB: o painel sobe vazio. Extrator ja instalado em outro caminho? Ajuste EXTRATOR_DB e EXTRATOR_LOG no env e rode de novo."
 fi
 
 # ---------------------------------------------------------------- resumo
