@@ -74,7 +74,16 @@ install -d -o painelfm -g painelfm -m 750 $DADOS $DADOS/fotos-ubs
 # ---------------------------------------------------------------- arquivo de ambiente
 azul "Arquivo de ambiente ($ENV_DEST)"
 if [ "$(readlink -f "$ENV_ORIGEM")" != "$(readlink -f "$ENV_DEST")" ]; then
+  CHAVE_ANTIGA=""
+  if [ -f $ENV_DEST ]; then
+    CHAVE_ANTIGA=$(grep -E '^DJANGO_SECRET_KEY=.{20,}' $ENV_DEST | head -1 || true)
+    cp -p $ENV_DEST "$ENV_DEST.anterior-$(date +%Y%m%d-%H%M%S)"
+    echo "AVISO: $ENV_DEST foi substituido por $ENV_ORIGEM (copia do anterior ao lado). Depois da primeira instalacao, edite $ENV_DEST e rode ./instalar.sh sem argumento."
+  fi
   install -o root -g painelfm -m 640 "$ENV_ORIGEM" $ENV_DEST
+  if [ -n "$CHAVE_ANTIGA" ] && ! grep -qE '^DJANGO_SECRET_KEY=.{20,}' $ENV_DEST; then   # mantem a chave (sessoes continuam validas)
+    sed -i '/^DJANGO_SECRET_KEY=/d' $ENV_DEST; echo "$CHAVE_ANTIGA" >> $ENV_DEST
+  fi
 fi
 if ! grep -qE '^DJANGO_SECRET_KEY=.{20,}' $ENV_DEST; then
   CHAVE=$(openssl rand -base64 48 | tr -d '\n')
@@ -138,7 +147,10 @@ sudo -E -u painelfm $VENV/bin/python manage.py check --deploy 2>&1 | tail -1
 # ---------------------------------------------------------------- certificado e nginx
 azul "Certificado autoassinado e nginx (https://$NOME_DNS)"
 bash "$AQUI/deploy/gera-certificado.sh" $ENV_DEST | tail -2
-sed -e "s/__NOME_DNS__/$NOME_DNS/g" -e "s/__IP_APP__/$IP_APP/g" "$AQUI/deploy/nginx-painel-filhosdeminas.conf" > /etc/nginx/sites-available/painel-filhosdeminas
+REAL_IP=""
+for ip in ${PROXY_REVERSO_IP//,/ }; do REAL_IP="${REAL_IP}set_real_ip_from $ip;\n"; done
+[ -n "$REAL_IP" ] && REAL_IP="${REAL_IP}real_ip_header X-Real-IP;"
+sed -e "s/__NOME_DNS__/$NOME_DNS/g" -e "s/__IP_APP__/$IP_APP/g" -e "s/^__REAL_IP__$/$REAL_IP/" "$AQUI/deploy/nginx-painel-filhosdeminas.conf" > /etc/nginx/sites-available/painel-filhosdeminas
 ln -sfn /etc/nginx/sites-available/painel-filhosdeminas /etc/nginx/sites-enabled/painel-filhosdeminas
 if [ -L /etc/nginx/sites-enabled/default ] && grep -q 'listen 80 default_server' /etc/nginx/sites-enabled/default; then
   rm -f /etc/nginx/sites-enabled/default      # a pagina de boas-vindas do nginx disputaria a porta 80
