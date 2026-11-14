@@ -79,7 +79,7 @@ EXTRATOR_LOG = E.get("EXTRATOR_LOG", "/opt/extrator-esus/logs/filhos_de_minas_ho
 DW = {
     "host": E.get("DW_HOST", "127.0.0.1"), "port": int(E.get("DW_PORT", "5432")),
     "dbname": E.get("DW_DB", "esus"), "user": E.get("DW_USER", ""), "password": E.get("DW_PASSWORD", ""),
-    "options": "-c default_transaction_read_only=on -c statement_timeout=120000",
+    "options": f"-c default_transaction_read_only=on -c statement_timeout=120000 -c TimeZone={E.get('FUSO', 'America/Sao_Paulo')}",
     "application_name": "painel-filhosdeminas",
 }
 

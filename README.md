@@ -112,7 +112,7 @@ Cada variável está comentada no arquivo. O que preencher em cada caso:
 | `DW_USER`, `DW_PASSWORD` | sim | sim | `painelfm_ro` e a senha do passo 1.2 |
 | `SES_API_USER`, `SES_API_PASSWORD` | opcional | **sim** | conta da API do Filhos de Minas. No cenário 1, a mesma do extrator, para a conferência diária (vazia = conferência desligada) |
 | `EXTRATOR_INSTALAR` | `0` | `1` | instala o extrator junto? |
-| `EXTRATOR_DB` | se não for o padrão | — | onde o extrator de vocês grava o banco (ver abaixo) |
+| `EXTRATOR_DB` | se não for o padrão | — | onde o extrator de vocês grava o banco (ver abaixo). Pode ficar em `/root` ou `/home`: o instalador ajusta as permissões e o isolamento dos serviços |
 | `EXTRATOR_PACOTE` | — | **sim** | caminho do `.tgz` baixado da SES-MG (ex.: `/root/extrator-pec-esus-1.0.0.tgz`) |
 | `EXTRATOR_DW_USER`, `EXTRATOR_DW_PASSWORD` | — | **sim** | usuário de leitura do DW para o extrator: o `esus_leitura` do `credenciais.txt` |
 | `EXTRATOR_RESP_NOME`, `_EMAIL`, `_TELEFONE`, `_CARGO` | — | **sim** | responsável no município (exigido pela SES-MG na configuração do extrator) |
@@ -210,6 +210,7 @@ e rode `./instalar.sh` de novo, sem argumento.
 | `password authentication failed` | Senha diferente da do passo 1.2, ou método do `pg_hba` incompatível | Rodar o SQL de novo com a senha do env (ele troca a senha); usar o mesmo método das outras linhas |
 | `sem SELECT nestas tabelas` | O SQL do passo 1.2 não rodou, ou rodou em outro banco | Rodar `dw-papel-somente-leitura.sql` no banco `esus` |
 | Painel abre mas sem gestantes | Cenário 1: `EXTRATOR_DB` errado; cenário 2: extrator sem importar | `find / -name extrator-local.db`; `journalctl -u painel-filhosdeminas-coleta`; rodar o instalador de novo |
+| Painel com dados, mas "os dados do painel têm mais de 2 horas" | A coleta de hora em hora falha (`journalctl -u painel-filhosdeminas-coleta`); com `unable to open database file`, o banco do extrator mudou de lugar | Ajustar `EXTRATOR_DB` no `/etc/painel-filhosdeminas/env` e rodar `./instalar.sh` sem argumento |
 | Extrator: `missing_required_settings` | Alguma `EXTRATOR_*` ou `SES_API_*` vazia | Preencher e rodar o instalador de novo |
 | Log da rotina: `Envio concluído: 0/N` todas as horas | Recusas da API (CNS, CPF, Bolsa Família) ou conta da API errada | Ver os motivos na tela **Gestantes**; conferir a conta com a SES-MG |
 | Navegador: "conexão não é particular" | Certificado autoassinado ainda não distribuído | Passo 4.2 |

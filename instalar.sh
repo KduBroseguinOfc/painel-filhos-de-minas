@@ -161,6 +161,14 @@ systemctl enable --now nginx >/dev/null 2>&1; systemctl reload nginx
 # ---------------------------------------------------------------- servicos do painel
 azul "Servicos do painel (systemd)"
 install -o root -g root -m 644 "$AQUI"/deploy/systemd/*.service "$AQUI"/deploy/systemd/*.timer /etc/systemd/system/
+# o painel e a coleta leem o banco do extrator: a pasta dele precisa existir dentro do sandbox das units (ProtectSystem/ProtectHome).
+# Extrator instalado por outro usuario, com o banco em /root ou /home (cenario 1): ProtectHome passa a read-only.
+for u in painel-filhosdeminas painel-filhosdeminas-coleta; do
+  install -d -m 755 /etc/systemd/system/$u.service.d
+  { echo "# gerado pelo instalar.sh a partir de EXTRATOR_DB"; echo "[Service]"
+    case "$EXTRATOR_DB" in /root/*|/home/*) echo "ProtectHome=read-only";; esac
+    echo "ReadOnlyPaths=-$(dirname "$EXTRATOR_DB")"; } > /etc/systemd/system/$u.service.d/extrator.conf
+done
 systemctl daemon-reload
 systemctl enable --now painel-filhosdeminas.service painel-filhosdeminas-coleta.timer painel-filhosdeminas-conferir-ses.timer painel-filhosdeminas-geo.timer painel-filhosdeminas-alertas-dia.timer >/dev/null 2>&1
 systemctl restart painel-filhosdeminas.service
@@ -216,7 +224,6 @@ if [ "$EXTRATOR_INSTALAR" != 1 ] && [ -f "$EXTRATOR_DB" ] && ! sudo -u painelfm 
   azul "Extrator ja instalado: liberando leitura do banco e do log para o painel (ACL, so leitura)"
   d="$(dirname "$EXTRATOR_DB")"; while [ "$d" != "/" ]; do setfacl -m u:painelfm:x "$d"; d="$(dirname "$d")"; done
   setfacl -m u:painelfm:rx "$(dirname "$EXTRATOR_DB")"; setfacl -m u:painelfm:r "$EXTRATOR_DB"; setfacl -d -m u:painelfm:r "$(dirname "$EXTRATOR_DB")"
-  if [ -f "$EXTRATOR_LOG" ]; then d="$(dirname "$EXTRATOR_LOG")"; while [ "$d" != "/" ]; do setfacl -m u:painelfm:x "$d"; d="$(dirname "$d")"; done; setfacl -m u:painelfm:rx "$(dirname "$EXTRATOR_LOG")"; setfacl -m u:painelfm:r "$EXTRATOR_LOG"; setfacl -d -m u:painelfm:r "$(dirname "$EXTRATOR_LOG")"; fi
   sudo -u painelfm test -r "$EXTRATOR_DB" && echo "painel le $EXTRATOR_DB"
 fi
 
@@ -225,7 +232,7 @@ if [ -r "$EXTRATOR_DB" ] || sudo -u painelfm test -r "$EXTRATOR_DB"; then
   azul "Primeira coleta do painel"
   ( cd $APP && sudo -E -u painelfm $VENV/bin/python manage.py coletar 2>&1 | tail -2 ) || echo "coleta falhou agora; o timer tenta de novo aos 50 min de cada hora (journalctl -u painel-filhosdeminas-coleta)"
 else
-  echo "banco do extrator nao encontrado em $EXTRATOR_DB: o painel sobe vazio. Extrator ja instalado em outro caminho? Ajuste EXTRATOR_DB e EXTRATOR_LOG no env e rode de novo."
+  echo "banco do extrator nao encontrado em $EXTRATOR_DB: o painel sobe vazio. Extrator ja instalado em outro caminho? Ajuste EXTRATOR_DB no env e rode de novo."
 fi
 
 # ---------------------------------------------------------------- resumo
