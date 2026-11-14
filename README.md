@@ -224,10 +224,10 @@ Backup do painel: `/var/lib/painel-filhosdeminas/` (banco com usuários, histór
 `sqlite3 /var/lib/painel-filhosdeminas/painel.db ".backup /root/painel-$(date +%F).db"`. O resto o instalador refaz.
 No cenário 2 inclua também `/opt/extrator-esus/.extrator-pec-esus/` (configuração e banco do extrator).
 
-Remover o painel: `systemctl disable --now 'painel-filhosdeminas*'`, apagar as units `painel-filhosdeminas*` de
-`/etc/systemd/system/`, o site `painel-filhosdeminas` do nginx, `/opt/painel-filhosdeminas`, `/var/lib/painel-filhosdeminas`
-e `/etc/painel-filhosdeminas`; no banco do PEC, `DROP OWNED BY painelfm_ro; DROP ROLE painelfm_ro;` e as linhas do
-`pg_hba.conf`. O extrator (cenário 2) tem as units `filhos-de-minas-hourly`, `cleanup-filhos-log` e `limpa-logs-banco-filhos`.
+Remover: `./remover.sh` (só o painel) ou `./remover.sh --extrator` (também o extrator instalado pelo `instalar.sh`, com o
+banco local dele). Desliga e apaga os serviços, o site do nginx, as pastas, o comando `painel-filhosdeminas`, o log e o usuário
+`painelfm`, e retira as permissões que o instalador deu na pasta de um extrator instalado por conta própria (cenário 1), sem
+tocar nele. O banco do PEC fica como está: lá, `DROP OWNED BY painelfm_ro; DROP ROLE painelfm_ro;` e as linhas do `pg_hba.conf`.
 
 ## SSO (OpenID Connect) — o que o painel oferece
 
@@ -249,6 +249,7 @@ origens de `LOGIN_LOCAL_IPS` se você preencher. Sair encerra também a sessão 
 | Pasta | Conteúdo |
 |---|---|
 | `instalar.sh` | instalador idempotente (ver acima) |
+| `remover.sh` | remove o painel (e, com `--extrator`, o extrator instalado pelo instalador) |
 | `deploy/env.exemplo` | todas as variáveis, comentadas |
 | `deploy/` | nginx, certificado, SQL do papel só leitura, units do systemd, coordenadas de exemplo, rotina/limpezas do extrator |
 | `painel/` | aplicação Django (`fm/`: coleta, indicadores, telas, alertas, geocodificação; `painel/`: settings) |
