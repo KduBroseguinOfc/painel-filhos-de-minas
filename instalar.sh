@@ -38,6 +38,7 @@ elif [ -f "$ENV_DEST" ]; then
 else
   erro "informe o arquivo de variaveis: ./instalar.sh meu-municipio.env (modelo em deploy/env.exemplo)"
 fi
+[ -e "$LOG" ] || install -m 600 /dev/null "$LOG"; chmod 600 "$LOG"   # o log guarda a senha do admin criado: so root le
 exec > >(tee -a "$LOG") 2>&1
 echo "[$(date '+%F %T')] instalacao iniciada ($ENV_ORIGEM)"
 

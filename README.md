@@ -145,7 +145,7 @@ novo com ele: o instalador continua de onde dá e não apaga nada.
 esse arquivo e rode `./instalar.sh` **sem argumento** (com o arquivo do `/root`, ele substitui o `/etc` pelo do `/root` e
 guarda uma cópia do anterior ao lado). O `/root/meu-municipio.env` pode ser apagado: `shred -u /root/meu-municipio.env`.
 
-**Anote a senha do administrador** que aparece na etapa "administrador local" (ela só é mostrada uma vez). Perdeu?
+**Anote a senha do administrador** que aparece na etapa "administrador local" (ela só é mostrada uma vez; também fica no log da instalação, que só o root lê — depois de anotar, pode apagar a linha ou o log). Perdeu?
 `painel-filhosdeminas criar_admin --redefinir`.
 
 O que ele faz, na ordem: pacotes do sistema → usuário `painelfm` → `/etc/painel-filhosdeminas/env` (gera a
