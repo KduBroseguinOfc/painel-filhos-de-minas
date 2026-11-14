@@ -9,7 +9,7 @@ O Extrator PEC e-SUS é da SES-MG (licença MIT, `"author": "Equipe Extrator PEC
 | 1 | **CNS do cadastro do cidadão** | A 1.0.0 lê o CNS só do atendimento; a API da SES-MG exige CNS e recusava com erro 500 (`null value in column cns`) gestantes que tinham CNS no cadastro. Passa a buscar também em `tb_cidadao` e `tb_fat_cidadao_pec`, aceita CPF **ou** CNS e repara os itens já gravados. |
 | 2 | **Releitura de todos os pendentes** | Gestante corrigida na UBS podia levar horas (ou nunca) para ser relida: a releitura pegava 500 itens aleatórios por hora e só com DUM recente. Passa a reler todos os pendentes sem CPF/CNS a cada execução. |
 | 3 | **Fora do recorte** | Atendimento com DUM há mais de 365 dias ficava na fila para sempre, reenviado toda hora. Passa a ser marcado `status_response = 'fora_recorte'` e não é enviado; DUM corrigida no PEC devolve o item à fila. |
-| 4 | **Cadência de reenvio** | Recusa por Bolsa Família (regra do programa, não erro) era reenviada toda hora. Passa a 1 vez por dia; a rodada das 03h relê os itens fora do recorte. |
+| 4 | **Cadência de reenvio** | Recusa por Bolsa Família (regra do programa, não erro) era reenviada toda hora. Passa a 1 vez por dia; a rodada das 03h relê os itens fora do recorte. Item ainda não enviado entra sempre (`COALESCE` na consulta; a 1ª versão, de 09/11/2026, deixava gestante nova fora da fila). |
 
 Resultado em Ipatinga: rodada de 29 para 13 minutos e de 5.710 para cerca de 1.300 envios por hora, sem perder gestante.
 

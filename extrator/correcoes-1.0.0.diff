@@ -70,7 +70,7 @@ diff -ru a/app/core/storage.js b/app/core/storage.js
        WHERE module_id = @moduleId AND queued = 0
 +        AND (status_response IS NULL OR status_response <> 'fora_recorte')
 +        -- recusa por regra do programa (CadUnico): tentar de novo so 1x por dia; as demais, a cada rotina
-+        AND NOT (message_response LIKE '%Bolsa%' AND updated_at > datetime('now', '-1 day'))
++        AND NOT (COALESCE(message_response, '') LIKE '%Bolsa%' AND updated_at > datetime('now', '-1 day'))
        ORDER BY item_id ASC
        ${limitClause}
      `;
