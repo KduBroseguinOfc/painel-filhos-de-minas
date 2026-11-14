@@ -109,6 +109,8 @@ $VENV/bin/pip install -q --upgrade pip
 $VENV/bin/pip install -q -r $APP/requirements.txt
 $VENV/bin/pip check >/dev/null && echo "dependencias Python ok ($($VENV/bin/pip list 2>/dev/null | grep -c . ) pacotes)"
 
+install -o root -g root -m 755 "$AQUI/deploy/painel-filhosdeminas" /usr/local/bin/painel-filhosdeminas   # comandos de manutencao
+
 # ---------------------------------------------------------------- DW: conexao e permissoes
 azul "Teste do DW do PEC e-SUS ($DW_HOST:$DW_PORT/$DW_DB como $DW_USER)"
 $VENV/bin/python - <<'PY'
@@ -138,7 +140,7 @@ sudo -E -u painelfm $VENV/bin/python manage.py migrate --noinput | tail -1
 sudo -u painelfm sqlite3 "$DB_PAINEL" "PRAGMA journal_mode=WAL;" >/dev/null
 sudo -E -u painelfm $VENV/bin/python manage.py collectstatic --noinput -v 0
 ADMIN_SAIDA=$(sudo -E -u painelfm $VENV/bin/python manage.py criar_admin)
-echo "administrador local: $(echo "$ADMIN_SAIDA" | tr '\n' ' ')  <- anote agora (se a instalacao falhar mais adiante, isto nao e repetido)"
+if echo "$ADMIN_SAIDA" | grep -q "^SENHA="; then echo "administrador local: $(echo "$ADMIN_SAIDA" | tr '\n' ' ')  <- anote agora (se a instalacao falhar mais adiante, isto nao e repetido)"; else echo "administrador local: $ADMIN_SAIDA"; fi
 if [ -f /etc/painel-filhosdeminas/ubs-coordenadas.json ]; then
   sudo -E -u painelfm $VENV/bin/python manage.py fixar_ubs /etc/painel-filhosdeminas/ubs-coordenadas.json | tail -1 || true
 fi
@@ -241,7 +243,8 @@ cat <<FIM
 Painel:        https://$NOME_DNS  (tambem https://$IP_APP)  — crie o registro DNS interno $NOME_DNS -> $IP_APP
 Certificado:   /etc/painel-filhosdeminas/tls/painel.crt (autoassinado, 100 anos): distribua como confiavel nas estacoes
 Administrador: $(echo "$ADMIN_SAIDA" | tr '\n' ' ')
-               (guarde agora: a senha nao sera mostrada de novo; para gerar outra: cd $APP && sudo -E -u painelfm $VENV/bin/python manage.py criar_admin --redefinir)
+               (a senha so aparece quando o admin e criado; para gerar outra: painel-filhosdeminas criar_admin --redefinir)
+Comandos:      painel-filhosdeminas <comando>  (ex.: testar_email voce@municipio.gov.br, coletar, criar_admin --redefinir)
 Configuracao:  $ENV_DEST  (depois de mudar: systemctl restart painel-filhosdeminas)
 Servicos:      systemctl status painel-filhosdeminas painel-filhosdeminas-coleta.timer$([ "$EXTRATOR_INSTALAR" = 1 ] && echo " filhos-de-minas-hourly.timer")
 Logs:          journalctl -u painel-filhosdeminas -u painel-filhosdeminas-coleta$([ "$EXTRATOR_INSTALAR" = 1 ] && echo "; $EXTRATOR_LOG")

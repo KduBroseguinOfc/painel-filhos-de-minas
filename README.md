@@ -146,7 +146,7 @@ esse arquivo e rode `./instalar.sh` **sem argumento** (com o arquivo do `/root`,
 guarda uma cópia do anterior ao lado). O `/root/meu-municipio.env` pode ser apagado: `shred -u /root/meu-municipio.env`.
 
 **Anote a senha do administrador** que aparece na etapa "administrador local" (ela só é mostrada uma vez). Perdeu?
-`cd /opt/painel-filhosdeminas/app && sudo -E -u painelfm ../venv/bin/python manage.py criar_admin --redefinir`.
+`painel-filhosdeminas criar_admin --redefinir`.
 
 O que ele faz, na ordem: pacotes do sistema → usuário `painelfm` → `/etc/painel-filhosdeminas/env` (gera a
 `DJANGO_SECRET_KEY`) → aplicação em `/opt/painel-filhosdeminas/app` + venv → **testa o DW** (conexão e SELECT em cada
@@ -188,17 +188,18 @@ e rode `./instalar.sh` de novo, sem argumento.
 | Quero… | Como |
 |---|---|
 | Criar usuários | Entrar como admin → **Usuários** → Novo. A senha é gerada e mostrada uma vez. |
-| Trocar a senha do admin | `cd /opt/painel-filhosdeminas/app && sudo -E -u painelfm ../venv/bin/python manage.py criar_admin --redefinir` |
+| Trocar a senha do admin | `painel-filhosdeminas criar_admin --redefinir` |
 | Mudar uma variável | Editar `/etc/painel-filhosdeminas/env` e `systemctl restart painel-filhosdeminas` (variável do nginx, do extrator ou do Telegram: `./instalar.sh` sem argumento) |
 | Ligar o SSO do município | `SSO_ATIVO=1`, `OIDC_ISSUER`, `OIDC_CLIENT_ID/SECRET` (e grupos, se quiser) no env; `systemctl restart painel-filhosdeminas`. Ver a seção SSO. |
-| Alertas por e-mail | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_FROM` (SMTP do município), `systemctl restart painel-filhosdeminas`. Teste: `cd /opt/painel-filhosdeminas/app && sudo -E -u painelfm ../venv/bin/python manage.py testar_email voce@municipio.gov.br` |
+| Alertas por e-mail | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_FROM` (SMTP do município), `systemctl restart painel-filhosdeminas`. Teste: `painel-filhosdeminas testar_email voce@municipio.gov.br` |
 | Alertas por Telegram | Criar um bot no @BotFather, `TELEGRAM_BOT_TOKEN` e `TELEGRAM_BOT_NOME` no env e rodar `./instalar.sh` sem argumento (ele liga o serviço do robô). Cada usuário vincula o próprio Telegram pelo código em **Meus alertas → Telegram** |
 | Logotipo/brasão | Copiar um PNG/SVG para `/var/lib/painel-filhosdeminas/logo.png` (`chown painelfm: ` e `chmod 640`) |
 | Foto da UBS no mapa | `/var/lib/painel-filhosdeminas/fotos-ubs/<cnes>.jpg` (`chown painelfm: ` e `chmod 640`) |
-| Pino da UBS no lugar certo | Copiar `deploy/ubs-coordenadas.exemplo.json` para `/etc/painel-filhosdeminas/ubs-coordenadas.json`, preencher e rodar `./instalar.sh` sem argumento (ou `manage.py fixar_ubs`) |
+| Pino da UBS no lugar certo | Copiar `deploy/ubs-coordenadas.exemplo.json` para `/etc/painel-filhosdeminas/ubs-coordenadas.json`, preencher e rodar `./instalar.sh` sem argumento (ou `painel-filhosdeminas fixar_ubs /etc/painel-filhosdeminas/ubs-coordenadas.json`) |
 | Correções no extrator do cenário 1 | `extrator/aplicar-correcoes.sh` na máquina do extrator, fora do horário da rotina ([extrator/README.md](extrator/README.md)) |
-| Sugerir CNS achado em outro sistema | Gerar o arquivo `;` (formato no `importar_cns.py`) e `manage.py importar_cns arquivo.txt`: só sugestão para a UBS conferir no CadSUS |
+| Sugerir CNS achado em outro sistema | Gerar o arquivo `;` (formato no `importar_cns.py`) e `painel-filhosdeminas importar_cns arquivo.txt`: só sugestão para a UBS conferir no CadSUS |
 | Atualizar | `cd /opt/painel-filhos-de-minas-src && git pull && ./instalar.sh` (sem argumento: banco, usuários, configuração e certificado são mantidos) |
+| Rodar um comando de manutenção | `painel-filhosdeminas <comando>` como root (lê as variáveis como os serviços; `painel-filhosdeminas help` lista os comandos). Não rode `manage.py` direto: sem as variáveis ele falha com `KeyError: 'DJANGO_SECRET_KEY'` |
 | Ver se está tudo bem | Tela **Situação do sistema**, ou `curl -k https://<NOME_DNS>/saude` (200 = coleta recente; 503 = sem coleta há 3 h) |
 
 ## Problemas comuns

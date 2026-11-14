@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# painel-filhosdeminas <comando do manage.py> [argumentos]   (como root)
+# Roda um comando de manutencao do painel como o usuario painelfm, com as variaveis de /etc/painel-filhosdeminas/env lidas
+# pelo systemd, do mesmo jeito que os servicos do painel (valor com espaco, aspas ou "<" funciona). Exemplos:
+#   painel-filhosdeminas criar_admin --redefinir
+#   painel-filhosdeminas testar_email voce@municipio.gov.br
+#   painel-filhosdeminas fixar_ubs /etc/painel-filhosdeminas/ubs-coordenadas.json
+#   painel-filhosdeminas coletar
+set -euo pipefail
+[ "$(id -u)" = 0 ] || { echo "rode como root (sudo painel-filhosdeminas ...)" >&2; exit 1; }
+[ $# -gt 0 ] || { echo "uso: painel-filhosdeminas <comando> [argumentos]  (lista: painel-filhosdeminas help)" >&2; exit 2; }
+exec systemd-run --quiet --wait --pipe --collect --service-type=exec \
+  -p User=painelfm -p Group=painelfm -p EnvironmentFile=/etc/painel-filhosdeminas/env \
+  -p WorkingDirectory=/opt/painel-filhosdeminas/app \
+  /opt/painel-filhosdeminas/venv/bin/python manage.py "$@"
